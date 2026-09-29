@@ -586,9 +586,9 @@ public class VertexSplitter {
      * Проверяет можно ли разделить вершину
      */
     private static boolean isValidForSplitting(Vertex vertex, Graph<Vertex> graph) {
-        return vertex != null &&
-                graph.getEdges().get(vertex) != null &&
-                !graph.getEdges().get(vertex).isEmpty();
+        return vertex != null 
+                && graph.getEdges().get(vertex) != null
+                && !graph.getEdges().get(vertex).isEmpty();
     }
 
     /**

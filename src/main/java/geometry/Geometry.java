@@ -11,7 +11,7 @@ public class Geometry {
     }
 
     public static double area(Point start, Point x, Point y) {
-        return area(x.coordinateDistance(start), y.coordinateDistance(start));
+        return area(x.coordinateDiff(start), y.coordinateDiff(start));
     }
 
     public static double area(List<? extends Point> polygon) {
@@ -21,9 +21,9 @@ public class Geometry {
         }
         var boundaryIterator = polygon.iterator();
         var base = boundaryIterator.next();
-        var curr = boundaryIterator.next().coordinateDistance(base);
+        var curr = boundaryIterator.next().coordinateDiff(base);
         while (boundaryIterator.hasNext()) {
-            var next = boundaryIterator.next().coordinateDistance(base);
+            var next = boundaryIterator.next().coordinateDiff(base);
             ans += area(curr, next);
             curr = next;
         }

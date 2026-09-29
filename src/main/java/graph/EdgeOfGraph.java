@@ -175,7 +175,7 @@ public class EdgeOfGraph<T extends Vertex> extends Edge {
 	 * @return arctan(from -PI to PI) + PI
 	 */
 	public double angle() {
-		Point vector = this.begin.coordinateDistance(this.end);
+		Point vector = this.begin.coordinateDiff(this.end);
 		return Math.atan2(vector.y, vector.x) + Math.PI;
 	}
 }

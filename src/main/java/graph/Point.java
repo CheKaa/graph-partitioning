@@ -35,6 +35,14 @@ public class Point {
 		Point v = (Point) obj;
 		return v.x == this.x && v.y == this.y;
 	}
+
+	public double normSq(){
+		return x*x + y*y;
+	}
+
+	public double norm(){
+		return Math.sqrt(normSq());
+	}
 	
 	
 	public double getLength(Point p) {
@@ -45,7 +53,7 @@ public class Point {
 	/**
 	 * @return Point - coordinate difference between the argument and "this"
 	 */
-	public Point coordinateDistance(Point p) {
+	public Point coordinateDiff(Point p) {
 		return new Point(p.x - this.x, p.y - this.y);
 	}
 	
@@ -53,7 +61,7 @@ public class Point {
 	/**
 	 * add to this point coordinates of p point
 	 */
-	public void addCoordinateDistance(Point p) {
+	public void addCoordinateDiff(Point p) {
 		this.x = this.x + p.x;
 		this.y = this.y + p.y;
 	}
@@ -86,6 +94,13 @@ public class Point {
 	 */
 	public double module() {
 		return Math.sqrt(x * x + y * y);
+	}
+
+	/**
+	 * @return scalar product with other point
+	 */
+	public double scalar(Point pt){
+		return x * pt.x + y * pt.y;
 	}
 	
 	/**

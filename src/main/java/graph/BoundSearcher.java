@@ -18,8 +18,8 @@ public class BoundSearcher {
         Vertex finalInitVertex = getInitVertex(vertices);
 
         vertices.sort((a, b) -> {
-            Point coorDistA = finalInitVertex.coordinateDistance(a);
-            Point coorDistB = finalInitVertex.coordinateDistance(b);
+            Point coorDistA = finalInitVertex.coordinateDiff(a);
+            Point coorDistB = finalInitVertex.coordinateDiff(b);
 
             double angleA = Math.atan2(coorDistA.y, coorDistA.x);
             double angleB = Math.atan2(coorDistB.y, coorDistB.x);
@@ -75,8 +75,8 @@ public class BoundSearcher {
         Vertex last = hull.get(hull.size() - 1);
         Vertex secondLast = hull.get(hull.size() - 2);
 
-        Point lastVec = secondLast.coordinateDistance(last);
-        Point newVec = last.coordinateDistance(vertex);
+        Point lastVec = secondLast.coordinateDiff(last);
+        Point newVec = last.coordinateDiff(vertex);
 
         return lastVec.x * newVec.y - lastVec.y * newVec.x;
     }

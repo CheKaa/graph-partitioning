@@ -31,6 +31,11 @@ public class ShortestPathTreeProcessor {
         this.alpha = alpha;
     }
 
+    public ShortestPathTreeProcessor() {
+        this.lengthPriority = 0.5;
+        this.alpha = 0.5;
+    }
+
     public static double calculateAlpha(double totalWeight, int maxWeight) {
         int k = (int) Math.ceil(totalWeight / maxWeight);
         int leftParts = k / 2;  // floor(k/2)
@@ -175,6 +180,17 @@ public class ShortestPathTreeProcessor {
         double res2Weight = idx2 == -1 ? 0. : result2.weights().get(idx2);
         double leftRes1Weight = result1.totalRegionWeight() == 0 ? totalWeight - sourceWeight - sinkWeight - result2.totalRegionWeight() - res1Weight : result1.totalRegionWeight() - res1Weight;
         double leftWeight = res2Weight + leftRes1Weight + sourceWeight;
+        // double rightWeight = totalWeight - leftWeight;
+        // int regionsRightComplete = (int) Math.floor(rightWeight/maxWeight);
+        // int regionsLeftComplete = (int) Math.floor(leftWeight/maxWeight);
+        // int regionsComplete = (int) Math.floor(totalWeight/maxWeight);
+        // double overhead = totalWeight/maxWeight - regionsComplete;
+
+        // double leftExceedRate = leftWeight/maxWeight - regionsLeftComplete;
+        // double rightExceedRate = rightWeight/maxWeight - regionsRightComplete;
+        // boolean leftToOne = regionsLeftComplete == 0 && regionsRightComplete != 0;
+        // boolean rightToOne= regionsRightComplete == 0 && regionsLeftComplete != 0;
+        // int extraRegion =  leftExceedRate + rightExceedRate > 1 ? 0 : 1;
 
         double balance = Math.abs(alpha * totalWeight - leftWeight);
 

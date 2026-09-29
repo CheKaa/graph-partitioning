@@ -130,8 +130,8 @@ public class Vertex extends Point {
 			return vertexIn.get(0);
 		}
 		if (vertexIn.size() == 2) {
-			return new Point(	vertexIn.get(0).x + vertexIn.get(0).coordinateDistance(vertexIn.get(1)).x / 2,
-					vertexIn.get(0).y + vertexIn.get(0).coordinateDistance(vertexIn.get(1)).y / 2);
+			return new Point(	vertexIn.get(0).x + vertexIn.get(0).coordinateDiff(vertexIn.get(1)).x / 2,
+					vertexIn.get(0).y + vertexIn.get(0).coordinateDiff(vertexIn.get(1)).y / 2);
 		}
 		
 		Map<T, Double> edgeWeight = countEdgeWeightForVertices(vertexIn);

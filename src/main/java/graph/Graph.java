@@ -79,7 +79,7 @@ public class Graph<T extends Vertex> {
     }
 
     public Double verticesWeight() {
-        return verticesArray().stream().mapToDouble(T::getWeight).sum();
+        return vertices().stream().mapToDouble(T::getWeight).sum();
     }
 
     public void addEdge(T begin, T end, double length, double bandwidth) {
@@ -132,6 +132,10 @@ public class Graph<T extends Vertex> {
 
     public List<T> verticesArray() {
         return edges.keySet().stream().toList();
+    }
+
+    public Set<T> vertices() {
+        return edges.keySet();
     }
 
     public int edgesNumber() {
@@ -216,6 +220,17 @@ public class Graph<T extends Vertex> {
                 }
             }
         }
+    }
+
+    public boolean checkUndir(){
+        for (T begin : edges.keySet()) {
+            for (T end : edges.get(begin).keySet()) {
+                if (!edges.get(end).containsKey(begin)){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public Graph<T> makeUndirectedGraph() {
