@@ -264,11 +264,7 @@ public class Graph<T extends Vertex> {
 
         for (EdgeOfGraph<T> edge : edges) {
             if (verticesOfSubgraph.contains(edge.begin) && verticesOfSubgraph.contains(edge.end)) {
-                if (edge.begin instanceof VertexOfDualGraph vertexOfDualGraph1 && edge.end instanceof VertexOfDualGraph vertexOfDualGraph2) {
-                    subgraph.addEdge((T) vertexOfDualGraph1, (T) vertexOfDualGraph2, edge.length);
-                } else {
                     subgraph.addEdge(edge.begin, edge.end, edge.length);
-                }
             }
         }
 
