@@ -6,8 +6,6 @@ import static java.lang.Math.abs;
 import java.util.ArrayList;
 import java.util.List;
 
-import graph.Point;
-
 public class SizeEstimator {
 
     public static<T extends Point> double findDiameter(List<T> vertices) {
@@ -45,20 +43,20 @@ public class SizeEstimator {
         return new Point(centerX, centerY);
     }
 
-    public static <T extends Point> double findRadius(List<T> vertices) {
+    public static double findRadius(List<? extends Point> vertices) {
         if (vertices.size() < 2) {
             return 0.0;
         } else if (vertices.size() == 2) {
-            T a = vertices.get(0);
-            T b = vertices.get(1);
-            return a.coordinateDiff(b).norm() / 2.0;
+            Point a = vertices.get(0);
+            Point b = vertices.get(1);
+            return a.getLength(b) / 2.0;
         }
     
         Point center = findMinEnclosingCircleCenter(vertices);
         double maxRadius = 0.0;
     
-        for (T vertex : vertices) {
-            double distance = vertex.coordinateDiff(center).norm();
+        for (Point vertex : vertices) {
+            double distance = vertex.getLength(center);
             if (distance > maxRadius) {
                 maxRadius = distance;
             }
@@ -68,16 +66,20 @@ public class SizeEstimator {
     }
 
     public static double leftTurn(Point a, Point b, Point c) {
-        return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+        
+        return c.coordinateDiff(a).cross(b.coordinateDiff(a));
     }
 
     public static<T extends Point> List<T> findConvexHull(List<T> vertices) {
+        if (vertices.size() < 3) {
+            throw new IllegalArgumentException("Convex hull calculation requires at least 3 points");
+        }
         T finalInitVertex = getInitVertex(vertices);
     
         vertices.sort((a, b) -> {
             Point coorDistA = finalInitVertex.coordinateDiff(a);
             Point coorDistB = finalInitVertex.coordinateDiff(b);
-    
+            // TODO use algebraic functions instead of atan
             double angleA = Math.atan2(coorDistA.y, coorDistA.x);
             double angleB = Math.atan2(coorDistB.y, coorDistB.x);
     
@@ -109,9 +111,6 @@ public class SizeEstimator {
     }
 
     public static<T extends Point> T getInitVertex(List<T> vertices) {
-        if (vertices.size() < 3) {
-            throw new IllegalArgumentException("Convex hull calculation requires at least 3 points");
-        }
     
         T initVertex = vertices.get(0);
         for (T vertex : vertices) {
@@ -126,13 +125,13 @@ public class SizeEstimator {
     }
 
     public static<T extends Point> double getCrossProduct(T vertex, List<T> hull) {
-        T last = hull.get(hull.size() - 1);
+        T last = hull.getLast();
         T secondLast = hull.get(hull.size() - 2);
     
         Point lastVec = secondLast.coordinateDiff(last);
         Point newVec = last.coordinateDiff(vertex);
     
-        return lastVec.x * newVec.y - lastVec.y * newVec.x;
+        return lastVec.cross(newVec);
     }
     
 }

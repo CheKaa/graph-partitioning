@@ -2,6 +2,8 @@ package graph;
 
 import java.util.Objects;
 
+import geometry.Point;
+
 public class EdgeOfGraph<T extends Vertex> extends Edge {
 	
 	public T begin;

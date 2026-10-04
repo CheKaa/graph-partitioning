@@ -2,8 +2,6 @@ package geometry;
 
 import java.util.List;
 
-import graph.Point;
-
 public class Geometry {
 
     public static double area(Point p, Point q) {

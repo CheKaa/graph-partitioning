@@ -1,8 +1,8 @@
 package graphPreparation;
 
 import geometry.Geometry;
+import geometry.Point;
 import graph.Graph;
-import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 import readWrite.CoordinateConversion;

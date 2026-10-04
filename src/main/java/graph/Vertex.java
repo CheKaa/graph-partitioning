@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
+import geometry.Point;
 import jakarta.validation.constraints.Size;
 
 

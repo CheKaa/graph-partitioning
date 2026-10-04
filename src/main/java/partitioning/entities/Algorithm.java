@@ -3,6 +3,7 @@ package partitioning.entities;
 import partitioning.BalancedPartitioning;
 import partitioning.algorithms.BubblePartitioning;
 import partitioning.algorithms.BubblePartitioningSequentially;
+import partitioning.algorithms.DualGraphPartitioner;
 import partitioning.algorithms.InertialFlowPartitioning;
 import partitioning.algorithms.OriginalInertialFlowPartitioning;
 
@@ -11,7 +12,8 @@ public enum Algorithm {
     DIF,
     RIF,
     BUP,
-    BUS;
+    BUS,
+    SPTCUT;
 
     public static BalancedPartitioning getBalancedPartitioningByAlgorithmName(
             Algorithm algorithmName,
@@ -34,6 +36,9 @@ public enum Algorithm {
             );
             case BUS -> new BalancedPartitioning(
                 new BubblePartitioningSequentially()
+            );
+            case SPTCUT -> new BalancedPartitioning(
+                new DualGraphPartitioner(lengthPriority, partitionParameter)
             );
         };
     }

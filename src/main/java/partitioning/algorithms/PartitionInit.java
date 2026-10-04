@@ -16,12 +16,13 @@ import java.util.Queue;
 import java.util.Set;
 
 import graph.Graph;
-import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import geometry.Point;
 
 public class PartitionInit {
     private static final Logger logger = LoggerFactory.getLogger(PartitionInit.class);

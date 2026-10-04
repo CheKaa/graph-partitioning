@@ -3,6 +3,7 @@ package graph;
 import java.util.ArrayList;
 
 import geometry.Geometry;
+import geometry.Point;
 
 public class VertexOfDualGraph extends Vertex{
 	

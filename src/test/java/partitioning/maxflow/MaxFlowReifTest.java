@@ -2,6 +2,8 @@ package partitioning.maxflow;
 
 import graph.*;
 import org.junit.jupiter.api.Test;
+
+import geometry.Point;
 import partitioning.entities.FlowResult;
 import readWrite.CoordinateConversion;
 

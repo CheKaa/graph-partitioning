@@ -1,4 +1,4 @@
-package graph;
+package geometry;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -46,7 +46,7 @@ public class Point {
 	
 	
 	public double getLength(Point p) {
-		return Math.sqrt(Math.pow(this.x - p.x, 2) + Math.pow(this.y - p.y, 2));
+		return coordinateDiff(p).norm();
 	}
 	
 	
@@ -89,12 +89,6 @@ public class Point {
 		return (a.x - this.x) * (b.x - this.x) <= 0 && (a.y - this.y) * (b.y - this.y) <= 0;
 	}
 	
-	/**
-	 * @return vector length
-	 */
-	public double module() {
-		return Math.sqrt(x * x + y * y);
-	}
 
 	/**
 	 * @return scalar product with other point
@@ -102,14 +96,18 @@ public class Point {
 	public double scalar(Point pt){
 		return x * pt.x + y * pt.y;
 	}
+
+	public double cross(Point pt){
+		return x * pt.y - y * pt.x;
+	}
 	
 	/**
 	 * @return vertex is in polygon
 	 */
-	public <T extends Point> boolean inFaceGeom(ArrayList<T> vertexIn) {
+	public boolean inFaceGeom(ArrayList<? extends Point> vertexIn) {
 		Point begin = vertexIn.get(vertexIn.size() - 1);
 		int count = 0;
-        for (T t : vertexIn) {
+        for (Point t : vertexIn) {
             if (this.inSegment(begin, t)) {
                 return true;
             }

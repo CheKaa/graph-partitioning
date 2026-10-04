@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import geometry.Point;
 import graph.Graph;
-import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 

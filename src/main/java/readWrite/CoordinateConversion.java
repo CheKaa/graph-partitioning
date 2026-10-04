@@ -2,8 +2,7 @@ package readWrite;
 
 import java.util.Set;
 
-import graph.Point;
-import graph.Vertex;
+import geometry.Point;
 
 public class CoordinateConversion {
 
@@ -20,15 +19,15 @@ public class CoordinateConversion {
     }
 
 
-    public <T extends Point> CoordinateConversion(Set<T> vertexSet) {
+    public CoordinateConversion(Set<? extends Point> vertexSet) {
         referencePoint = findCenter(vertexSet);
     }   
 
 
-    private <T extends Point> Point findCenter(Set<T> vertexSet) {
+    private Point findCenter(Set<? extends Point> vertexSet) {
         Point ans = new Point(0, 0);
         double minX = Double.MAX_VALUE, maxX = Double.MIN_VALUE, minY = Double.MAX_VALUE, maxY = Double.MIN_VALUE;
-        for (T ver : vertexSet) {
+        for (Point ver : vertexSet) {
             minX = Math.min(minX, ver.x);
             maxX = Math.max(maxX, ver.x);
             minY = Math.min(minY, ver.y);
