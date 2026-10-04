@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.GsonBuilder;
 
-import graph.BoundSearcher;
+import geometry.SizeEstimator;
 import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
@@ -160,7 +160,7 @@ public class PartitionWriter {
 			totalGraphWeight += bigVerticesWeight;
 			
 			List<Double> diameters = partitionResult.stream()
-            .map(p -> BoundSearcher.findDiameter(p.stream().flatMap(v -> v.getVerticesOfFace().stream()).collect(Collectors.toList())))
+            .map(p -> SizeEstimator.findDiameter(p.stream().flatMap(v -> v.getVerticesOfFace().stream()).collect(Collectors.toList())))
             .collect(Collectors.toList());
 
 			Map<String, Object> jsonData = new LinkedHashMap<>();

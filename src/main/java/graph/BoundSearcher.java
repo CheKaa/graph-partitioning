@@ -1,7 +1,5 @@
 package graph;
 
-import static java.lang.Double.max;
-import static java.lang.Math.abs;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,73 +11,6 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Assertions;
 
 public class BoundSearcher {
-
-    public static List<Vertex> findConvexHull(List<Vertex> vertices) {
-        Vertex finalInitVertex = getInitVertex(vertices);
-
-        vertices.sort((a, b) -> {
-            Point coorDistA = finalInitVertex.coordinateDiff(a);
-            Point coorDistB = finalInitVertex.coordinateDiff(b);
-
-            double angleA = Math.atan2(coorDistA.y, coorDistA.x);
-            double angleB = Math.atan2(coorDistB.y, coorDistB.x);
-
-            int cmp = Double.compare(angleA, angleB);
-            if (cmp != 0) return cmp;
-
-            double distanceA = coorDistA.x * coorDistA.x + coorDistA.y * coorDistA.y;
-            double distanceB = coorDistB.x * coorDistB.x + coorDistB.y * coorDistB.y;
-            cmp = Double.compare(distanceA, distanceB);
-            if (cmp != 0) return cmp;
-
-            return Long.compare(a.name, b.name);
-        });
-
-        List<Vertex> hull = new ArrayList<>();
-
-        for (Vertex vertex : vertices) {
-            while (hull.size() >= 2) {
-
-                double crossProduct = getCrossProduct(vertex, hull);
-
-                if (crossProduct <= 0) {
-                    hull.remove(hull.size() - 1);
-                } else {
-                    break;
-                }
-            }
-            hull.add(vertex);
-        }
-
-        return hull;
-    }
-
-    private static Vertex getInitVertex(List<Vertex> vertices) {
-        if (vertices.size() < 3) {
-            throw new IllegalArgumentException("Convex hull calculation requires at least 3 points");
-        }
-
-        Vertex initVertex = vertices.get(0);
-        for (Vertex vertex : vertices) {
-            if (vertex.x < initVertex.x ||
-                    (vertex.x == initVertex.x &&
-                            vertex.y < initVertex.y)) {
-                initVertex = vertex;
-            }
-        }
-
-        return initVertex;
-    }
-
-    private static double getCrossProduct(Vertex vertex, List<Vertex> hull) {
-        Vertex last = hull.get(hull.size() - 1);
-        Vertex secondLast = hull.get(hull.size() - 2);
-
-        Point lastVec = secondLast.coordinateDiff(last);
-        Point newVec = last.coordinateDiff(vertex);
-
-        return lastVec.x * newVec.y - lastVec.y * newVec.x;
-    }
 
     public static List<Vertex> findBound(
             Graph<Vertex> graph,
@@ -211,68 +142,6 @@ public class BoundSearcher {
             }
         }
         return bestEdge == null? sortedEdges.last() : bestEdge;
-    }
-
-    private static double leftTurn(Point a, Point b, Point c) {
-        return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
-    }
-
-    public static double findDiameter(List<Vertex> vertices) {
-        List<Vertex> hull = findConvexHull(vertices);
-        double diameter = 0.0;
-        int n = hull.size();
-        if (n == 1) return 0;
-        if (n == 2) return hull.get(0).getLength(hull.get(0));
-        int k = 1;
-        while (abs(leftTurn(hull.get(n-1), hull.get(0), hull.get((k+1) % n))) > abs(leftTurn(hull.get(n-1), hull.get(0), hull.get(k)))) {
-            k++;
-        }
-        for (int i = 0, j = k; i <= k && j < n; i++) {
-            diameter = max(diameter, hull.get(i).getLength(hull.get(j)));
-            while (j < n && abs(leftTurn(hull.get(i), hull.get((i + 1) % n), hull.get((j + 1) % n))) > abs(leftTurn(hull.get(i), hull.get((i + 1) % n), hull.get(j)))) {
-                diameter = max(diameter, hull.get(i).getLength(hull.get((j + 1) % n)));
-                j++;
-            }
-        }
-        return diameter;
-    }
-
-    public static double findRadius(List<Vertex> vertices) {
-        if (vertices.size() < 2) {
-            return 0.0;
-        } else if (vertices.size() == 2) {
-            Vertex a = vertices.get(0);
-            Vertex b = vertices.get(1);
-            return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)) / 2.0;
-        }
-
-        Point center = findMinEnclosingCircleCenter(vertices);
-        double maxRadius = 0.0;
-
-        for (Vertex vertex : vertices) {
-            double distance = Math.sqrt(Math.pow(vertex.x - center.x, 2) +
-                    Math.pow(vertex.y - center.y, 2));
-            if (distance > maxRadius) {
-                maxRadius = distance;
-            }
-        }
-
-        return maxRadius;
-    }
-
-    private static Point findMinEnclosingCircleCenter(List<Vertex> vertices) {
-        double sumX = 0.0;
-        double sumY = 0.0;
-
-        for (Vertex vertex : vertices) {
-            sumX += vertex.x;
-            sumY += vertex.y;
-        }
-
-        double centerX = sumX / vertices.size();
-        double centerY = sumY / vertices.size();
-
-        return new Point(centerX, centerY);
     }
 
 }

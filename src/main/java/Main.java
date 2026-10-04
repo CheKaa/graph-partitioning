@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import addingPoints.LocalizationPoints;
+import geometry.SizeEstimator;
 import graph.BoundSearcher;
 import graph.Graph;
 import graph.PartitionGraphVertex;
@@ -199,7 +200,7 @@ public class Main implements Runnable {
             for (VertexOfDualGraph face : partitionResultForFaces.get(i)) {
                 partitionResult.get(i).addAll(face.getVerticesOfFace());
             }
-            if (BoundSearcher.findRadius(new ArrayList<>(partitionResult.get(i))) > maxRegionRadiusMeters) {
+            if (SizeEstimator.findRadius(new ArrayList<>(partitionResult.get(i))) > maxRegionRadiusMeters) {
                 countPartsWithNonFittingRadius++;
             }
             bounds.add(Map.entry(BoundSearcher.findBound(graph, partitionResultForFaces.get(i)), partitionResultForFaces.get(i).stream().mapToDouble(Vertex::getWeight).sum()));
