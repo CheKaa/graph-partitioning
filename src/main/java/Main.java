@@ -14,11 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import addingPoints.LocalizationPoints;
+import geometry.Point;
 import geometry.SizeEstimator;
 import graph.BoundSearcher;
 import graph.Graph;
 import graph.PartitionGraphVertex;
-import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 import graphPreparation.GraphPreparation;

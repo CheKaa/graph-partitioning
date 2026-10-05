@@ -18,7 +18,10 @@ public class CutEvaluator {
             Graph<VertexOfDualGraph> dualGraph,
             Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest,
             List<VertexOfDualGraph> roots,
-            double totalWeight) {
+            double totalWeight,
+            double minRelPartSize
+        ) {
+        // TODO ensure both subgraphs will have weight more than minRelPartSize*totalweight
 
         /**
          * Time Complexity: O(B * (V_dual + E_dual)) where B is the number of roots,

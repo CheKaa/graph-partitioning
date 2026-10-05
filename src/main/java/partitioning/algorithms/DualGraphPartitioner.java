@@ -1,20 +1,59 @@
 package partitioning.algorithms;
 
+import graph.BoundSearcher;
 import graph.Graph;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import readWrite.CoordinateConversion;
+import readWrite.PartitionDebugger;
 
-public class DualGraphPartitioner {
-    private final double maxWeight;
-    private final CostFunction costFunction;
+public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
+    private static final Logger logger = LoggerFactory.getLogger(DualGraphPartitioner.class);
+    private double lengthPriority;
+    private double minRelPartSize;
+    private PartitionDebugger debugger;
 
-    public DualGraphPartitioner(double maxWeight, CostFunction costFunction) {
-        this.maxWeight = maxWeight;
-        this.costFunction = costFunction;
+    public DualGraphPartitioner(double lengthPriority, double minRelPartSize) {
+        this.lengthPriority = lengthPriority;
+        this.minRelPartSize = minRelPartSize;
     }
 
-    public List<Set<VertexOfDualGraph>> partition(Graph<Vertex> graph, Graph<VertexOfDualGraph> dualGraph, List<Vertex> boundary) {
+    @Override
+    public void balancedPartitionAlgorithm(
+            Graph<Vertex> simpleGraph,
+            Graph<VertexOfDualGraph> graph,
+            int maxSumVerticesWeight,
+            CoordinateConversion coordinateConversion) {
+        
+        this.graph = graph;
+        this.debugger = new PartitionDebugger(coordinateConversion);
+
+        
+        // The DualGraphPartitioner requires an initial boundary of the planar graph.
+        // In a typical planar graph, the outer face forms the initial boundary.
+        // We extract the boundary vertices from the dual graph's outer face or
+        // from a known boundary provider.
+        List<Vertex> initialBoundary = extractInitialBoundary(simpleGraph);
+        
+        if (initialBoundary == null || initialBoundary.isEmpty()) {
+            logger.error("Could not determine initial boundary for DualGraphPartitioner");
+            return;
+        }
+
+        // Use the existing partitioning logic to populate this.partition
+        this.partition = partition(simpleGraph, graph, initialBoundary, maxSumVerticesWeight);
+    }
+
+    private List<Vertex> extractInitialBoundary(Graph<Vertex> simpleGraph) {
+        // Use BoundSearcher to correctly find the ordered boundary of the planar graph.
+        Set<VertexOfDualGraph> allFaces = new HashSet<>(this.graph.vertices());
+        return BoundSearcher.findBound(simpleGraph, allFaces);
+    }
+
+    public List<Set<VertexOfDualGraph>> partition(Graph<Vertex> graph, Graph<VertexOfDualGraph> dualGraph, List<Vertex> boundary, double maxWeight) {
         /**
          * Overall Time Complexity: O(K * (B^2 + E log V + V_dual + E_dual)) 
          * where K is the number of recursive splits, B is boundary size, 
@@ -28,12 +67,13 @@ public class DualGraphPartitioner {
 
         BoundaryVertexFinder<Vertex> boundaryFinder = new BoundaryVertexFinder<>();
         DualForestBuilder<Vertex> forestBuilder = new DualForestBuilder<>();
-        CutEvaluator cutEvaluator = new CutEvaluator(costFunction);
+
 
         while (!queue.isEmpty()) {
             PartitionRegion region = queue.poll();
             double regionWeight = region.dualVertices.stream().mapToDouble(Vertex::getWeight).sum();
 
+            CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
             if (regionWeight <= maxWeight) {
                 finalPartitions.add(region.dualVertices);
                 continue;
@@ -47,23 +87,29 @@ public class DualGraphPartitioner {
             }
 
             // 2. Multi-source Dijkstra from first part of boundary
-            List<Vertex> part1Boundary = getCyclePart(region.boundary, distIdx[0], distIdx[1]);
-            Map<Vertex, Vertex> spt = MultiSourceSPT.computeSPTForest(graph, part1Boundary);
+            List<Vertex> startBoundary = getCyclePart(region.boundary, distIdx[0], distIdx[1]);
+            List<Vertex> finishBoundary = getCyclePart(region.boundary, distIdx[1], distIdx[0]);
+
+            Map<Vertex, Vertex> spt = MultiSourceSPT.computeSPTForest(graph, startBoundary);
 
 
-
-            Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest = forestBuilder.buildDualForest(graph, dualGraph, spt);
+            Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest = forestBuilder.buildDualForest(graph, dualGraph, spt,  startBoundary, finishBoundary);
 
             List<VertexOfDualGraph> roots = getDualRoots(graph, region.boundary);
-            Cut bestCut = cutEvaluator.evaluateBestCut(graph, dualGraph, dualForest, roots, regionWeight);
+            Cut bestCut = cutEvaluator.evaluateBestCut(graph, dualGraph, dualForest, roots, regionWeight, minRelPartSize);
 
             if (bestCut == null) {
                 finalPartitions.add(region.dualVertices);
             } else {
-                List<List<Vertex>> newBoundaries = updateBoundaries(graph, region.boundary, bestCut);
+                List<Vertex>[] newBoundaries = updateBoundaries(graph, region.boundary, bestCut);
                 
-                queue.add(new PartitionRegion(bestCut.part1, newBoundaries.get(0)));
-                queue.add(new PartitionRegion(bestCut.part2, newBoundaries.get(1)));
+                // Debug dumping
+                debugger.dumpBoundaryGeoJSON(region.boundary, "region_boundary_" + System.nanoTime());
+                debugger.dumpSPTGeoJSON(spt, "spt_" + System.nanoTime());
+                debugger.dumpDualTreeGeoJSON(dualForest, "dual_tree_" + System.nanoTime());
+                
+                queue.add(new PartitionRegion(bestCut.part1, newBoundaries[0]));
+                queue.add(new PartitionRegion(bestCut.part2, newBoundaries[1]));
             }
         }
 
@@ -95,9 +141,9 @@ public class DualGraphPartitioner {
         return roots;
     }
 
-    private List<List<Vertex>> updateBoundaries(Graph<Vertex> graph, List<Vertex> boundary, Cut cut) {
+    private List<Vertex>[] updateBoundaries(Graph<Vertex> graph, List<Vertex> boundary, Cut cut) {
         if (cut == null || cut.cutPath == null || cut.cutPath.isEmpty()) {
-            return List.of(boundary, boundary);
+            return new List[]{boundary, boundary};
         }
 
         Vertex startVertex = cut.cutPath.get(0);
@@ -138,7 +184,7 @@ public class DualGraphPartitioner {
         boundary2.add(boundary.get(startIdx));
         boundary2.addAll(cutPathVertices);
 
-        return List.of(boundary1, boundary2);
+        return new List[]{boundary1, boundary2};
     }
 
     private static class PartitionRegion {

@@ -52,9 +52,11 @@ public class Graph<T extends Vertex> {
     }
 
     public T addVertex(T v) {
-        if (!edges.containsKey(v)) {
-            edges.put(v, new HashMap<>());
+        boolean exists = edges.containsKey(v);
+        if (exists) {
+            return v;
         }
+        edges.put(v, new HashMap<>());
         if (edgeToDualVertex != null) {
             List<Vertex> faceVertices = ((VertexOfDualGraph) v).getVerticesOfFace();
             for (int i = 0; i < faceVertices.size(); i++) {
@@ -71,8 +73,9 @@ public class Graph<T extends Vertex> {
     }
 
     public void deleteVertex(T v) {
+        var neib = edges.get(v);
         edges.remove(v);
-        for (T begin : edges.keySet()) {
+        for (T begin : neib.keySet()) {
             edges.get(begin).remove(v);
         }
 
@@ -87,7 +90,7 @@ public class Graph<T extends Vertex> {
         addVertex(begin);
         addVertex(end);
         edges.get(begin).put(end, new Edge(length, bandwidth));
-        edges.get(end).put(end, new Edge(length, bandwidth));
+        edges.get(end).put(begin, new Edge(length, bandwidth));
     }
 
     public void addEdge(T begin, T end, double length) {

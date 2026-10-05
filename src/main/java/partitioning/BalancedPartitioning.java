@@ -11,6 +11,8 @@ import graph.*;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import geometry.Point;
 import partitioning.algorithms.BalancedPartitioningOfPlanarGraphs;
 import readWrite.CoordinateConversion;
 

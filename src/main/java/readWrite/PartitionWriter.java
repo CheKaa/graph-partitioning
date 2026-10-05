@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.GsonBuilder;
 
+import geometry.Point;
 import geometry.SizeEstimator;
-import graph.Point;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
 import partitioning.BalancedPartitioning;
