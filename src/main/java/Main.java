@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +120,7 @@ public class Main implements Runnable {
         }
 
         for (VertexOfDualGraph v : preparedGraph.verticesArray()) {
-            Assertions.assertNotNull(v.getVerticesOfFace());
+            assert v.getVerticesOfFace() != null;
         }
 
         List<Vertex> weightedVertices;

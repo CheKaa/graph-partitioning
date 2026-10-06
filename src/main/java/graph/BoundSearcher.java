@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.junit.jupiter.api.Assertions;
 
 public class BoundSearcher {
 
@@ -45,8 +44,7 @@ public class BoundSearcher {
         }
 
         //Assertions.assertTrue(graph.isConnected());
-        Graph<Vertex> partSubgraph = graph.createSubgraphFromFaces(verticesByFaces).makeUndirectedGraph();
-        //Assertions.assertTrue(partSubgraph.isConnected());
+        Graph<Vertex> partSubgraph = graph.createSubgraphFromFaces(verticesByFaces);
 
         Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> arrangedEdges = partSubgraph.arrangeByAngle();
 
@@ -56,7 +54,7 @@ public class BoundSearcher {
 
         EdgeOfGraph<Vertex> startEdge = findMaxEdgeLessThanPiOver2(arrangedEdges.get(start));
 
-        Assertions.assertTrue((0 <= startEdge.getAngle() && startEdge.getAngle() < Math.PI / 2.0) ||
+        assert ((0 <= startEdge.getAngle() && startEdge.getAngle() < Math.PI / 2.0) ||
                 (3.0 * Math.PI / 2.0) <= startEdge.getAngle() && startEdge.getAngle() < 2 * Math.PI);
 
         EdgeOfGraph<Vertex> prevEdge = new EdgeOfGraph<>(startEdge.end, startEdge.begin, 0);

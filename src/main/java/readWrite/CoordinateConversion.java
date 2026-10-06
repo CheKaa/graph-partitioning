@@ -18,6 +18,10 @@ public class CoordinateConversion {
         referencePoint = refPoint;
     }
 
+    public CoordinateConversion(double x, double y) {
+        referencePoint = new Point(x,y);
+    }
+
 
     public CoordinateConversion(Set<? extends Point> vertexSet) {
         referencePoint = findCenter(vertexSet);

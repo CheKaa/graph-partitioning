@@ -17,7 +17,6 @@ import java.util.Stack;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +123,7 @@ public class InertialFlowPartitioning extends BalancedPartitioningOfPlanarGraphs
             long time3 = System.currentTimeMillis();
             logger.info("Time for creating graph with source and sink: {} seconds", (time3 - time2) / 1000.0);
 
-            Assertions.assertEquals(currentGraph.verticesNumber() + 2, copyGraph.verticesNumber());
+            assert currentGraph.verticesNumber() + 2 == copyGraph.verticesNumber();
 
             logger.debug("process graph with {} vertices, source size = {}, sink size = {}", copyGraph.verticesNumber(), sourceSet.size(), sinkSet.size());
             MaxFlow maxFlow;
@@ -199,7 +198,7 @@ public class InertialFlowPartitioning extends BalancedPartitioningOfPlanarGraphs
                     isConnectedWithSource.keySet().stream().filter(v -> !isConnectedWithSource.get(v)).collect(Collectors.toSet())));
         }
 
-        Assertions.assertEquals(graphWithFlow.verticesNumber(), subpartition.get(0).verticesNumber() + subpartition.get(1).verticesNumber());
+        assert graphWithFlow.verticesNumber() == subpartition.get(0).verticesNumber() + subpartition.get(1).verticesNumber();
 
         if (subpartition.get(0).verticesSumWeight() < subpartition.get(1).verticesSumWeight()) {
             return new ArrayList<>(Arrays.asList(subpartition.get(1), subpartition.get(0)));

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import graph.*;
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +120,7 @@ public class BalancedPartitioning {
 					centerVertex = v;
 				}
 			}
-			Assertions.assertNotNull(centerVertex);
+			assert centerVertex != null;
 			centers.add(new Point(centerVertex.x, centerVertex.y));
 		}
 		return centers;

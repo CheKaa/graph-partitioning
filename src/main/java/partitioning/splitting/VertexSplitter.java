@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -612,7 +611,7 @@ public class VertexSplitter {
         connectNeighborsToSplitVertex(splitGraph, originalVertex,
                                       splitVertex2, split.rightNeighbors());
 
-        Assertions.assertEquals(split.pathNeighbors().size(), connectedPathNeighbors);
+        assert split.pathNeighbors().size() == connectedPathNeighbors;
     }
 
     /**

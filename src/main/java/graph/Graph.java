@@ -75,6 +75,7 @@ public class Graph<T extends Vertex> {
     public void deleteVertex(T v) {
         var neib = edges.get(v);
         edges.remove(v);
+        if (neib == null) return;
         for (T begin : neib.keySet()) {
             edges.get(begin).remove(v);
         }
@@ -189,7 +190,6 @@ public class Graph<T extends Vertex> {
 
     public List<Set<T>> splitForConnectedComponents() {
         // make undirected
-        Graph<T> undirGraph = makeUndirectedGraph();
         List<Set<T>> component = new ArrayList<>();
         Set<T> visited = new HashSet<>();
         Set<T> actualComp = new HashSet<>();
@@ -197,7 +197,7 @@ public class Graph<T extends Vertex> {
             if (!visited.contains(begin)) {
                 actualComp.add(begin);
                 visited.add(begin);
-                undirGraph.dfsComponents(begin, actualComp, visited);
+                dfsComponents(begin, actualComp, visited);
                 component.add(actualComp);
                 actualComp = new HashSet<>();
             }
@@ -299,7 +299,7 @@ public class Graph<T extends Vertex> {
     }
 
     public Graph<T> getLargestConnectedComponent() {
-        List<Set<T>> connectivityComponents = makeUndirectedGraph().splitForConnectedComponents();
+        List<Set<T>> connectivityComponents = splitForConnectedComponents();
         Set<T> largestComponent = connectivityComponents.stream().max(Comparator.comparingInt(Set::size)).orElseThrow();
         return createSubgraph(largestComponent);
     }
@@ -411,7 +411,8 @@ public class Graph<T extends Vertex> {
         if (edgeToDualVertex == null) {
             edgeToDualVertex = new HashMap<>();
             for (var v : verticesArray()) {
-                List<Vertex> faceVertices = ((VertexOfDualGraph) v).getVerticesOfFace();
+                if (!(v instanceof VertexOfDualGraph dualV)) continue;
+                List<Vertex> faceVertices = dualV.getVerticesOfFace();
                 for (int i = 0; i < faceVertices.size(); i++) {
                     var cur = faceVertices.get(i);
                     var next = faceVertices.get((i + 1) % faceVertices.size());
@@ -419,7 +420,7 @@ public class Graph<T extends Vertex> {
                         edgeToDualVertex.put(cur, new HashMap<>());
                     }
                     Map<Vertex, VertexOfDualGraph> map = edgeToDualVertex.get(cur);
-                    map.put(next, (VertexOfDualGraph) v);
+                    map.put(next, dualV);
                 }
             }
         }

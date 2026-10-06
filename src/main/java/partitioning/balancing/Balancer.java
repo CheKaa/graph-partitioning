@@ -10,7 +10,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ public class Balancer {
     ) {
         this.partitionGraph = partitionGraph;
         this.dualGraph = dualGraph;
-        this.startGraph = startGraph.makeUndirectedGraph();
+        this.startGraph = startGraph;
         this.maxWeight = maxWeight;
         this.pathToResultDirectory = pathToResultDirectory;
         this.cc = cc;
@@ -90,7 +89,7 @@ public class Balancer {
                 Graph<VertexOfDualGraph> regionsSubgraph = dualGraph.createSubgraph(balancingVerticesSet);
                 Map<Set<VertexOfDualGraph>, Double> cutBefore = calculateCutWeights(regionsSubgraph, List.of(new HashSet<>(smallestVertex.vertices), new HashSet<>(biggestNeighbor.vertices)));
 
-                Assertions.assertEquals(balancingVerticesSet.size(), regionsSubgraph.verticesNumber());
+                assert balancingVerticesSet.size() == regionsSubgraph.verticesNumber();
                 if (!regionsSubgraph.isConnected()) {
                     continue;
                 }
@@ -113,7 +112,7 @@ public class Balancer {
                     }
                     newParts.add(mergedPart);
 
-                    Assertions.assertEquals(partitionGraph.verticesNumber() - 1, newParts.size());
+                    assert newParts.size() == partitionGraph.verticesNumber() - 1;
 
                     Map<VertexOfDualGraph, Integer> dualVertexToPartNumber = new HashMap<>();
                     for (int i = 0; i < newParts.size(); i++) {
@@ -122,7 +121,7 @@ public class Balancer {
                         }
                     }
 
-                    Assertions.assertEquals(dualGraph.verticesNumber(), dualVertexToPartNumber.size());
+                    assert dualGraph.verticesNumber() == dualVertexToPartNumber.size();
 
                     Graph<PartitionGraphVertex> newPartitionGraph = PartitionGraphVertex.buildPartitionGraph(
                             dualGraph,
@@ -163,7 +162,7 @@ public class Balancer {
 
             if (bestNeighbor != null) {
 
-                Assertions.assertEquals(2, bestPartition.size());
+                assert bestPartition.size() == 2;
 
                 smallestVertex.changeVertices(new ArrayList<>(bestPartition.get(0)));
 
@@ -179,7 +178,7 @@ public class Balancer {
 
                 newParts.add(new HashSet<>(smallestVertex.vertices));
                 newParts.add(new HashSet<>(bestNeighbor.vertices));
-                Assertions.assertEquals(partitionGraph.verticesNumber(), newParts.size());
+                assert newParts.size() == partitionGraph.verticesNumber();
 
 
                 HashMap<VertexOfDualGraph, Integer> dualVertexToPartNumber = new HashMap<>();
@@ -189,7 +188,7 @@ public class Balancer {
                     }
                 }
 
-                Assertions.assertEquals(dualGraph.verticesNumber(), dualVertexToPartNumber.size());
+                assert dualGraph.verticesNumber() == dualVertexToPartNumber.size();
                 Graph<PartitionGraphVertex> newPartitionGraph = PartitionGraphVertex.buildPartitionGraph(dualGraph, newParts, dualVertexToPartNumber);
                 wasMerged.add(bestVerticesSet);
                 this.partitionGraph = newPartitionGraph;
@@ -213,7 +212,7 @@ public class Balancer {
             variance = calculateVariance();
         }
         for (PartitionGraphVertex vertex : partitionGraph.verticesArray()) {
-            Assertions.assertTrue(vertex.getWeight() <= maxWeight);
+            assert vertex.getWeight() <= maxWeight;
         }
         return partitionGraph.verticesArray()
                 .stream()

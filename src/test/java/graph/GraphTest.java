@@ -7,8 +7,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import geometry.Point;
+import readWrite.CoordinateConversion;
 import readWrite.GraphReader;
 import readWrite.GraphWriter;
+import readWrite.PartitionDebugger;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,9 +149,17 @@ class GraphTest {
     @Test
     void testDualGraph() throws IOException {
         Graph<Vertex> g = new Graph<>();
+        CoordinateConversion cc = new CoordinateConversion(0., 0.);
+        PartitionDebugger db = new PartitionDebugger(cc);
         graphReader.readGraphFromFile(g, "src/test/resources/testGraphs/test_graph_1.txt".replace('/', File.separatorChar), false);
+        
+        db.dumpOriginalGraphGeoJSON(g, "test_1_dump");
+        
         GraphPreparation preparation = new GraphPreparation();
+
         Graph<VertexOfDualGraph> dualGraph = preparation.prepareGraph(g, 1e-9);
+        Assertions.assertTrue(checkDualCorrectness(dualGraph));
+        Assertions.assertTrue(dualGraph.isConnected());
         // graphWriter.printGraphToFile(dualGraph, "src/test/resources/testGraphs", "test_graph_1_dual.txt", false);
         Assertions.assertEquals(6, dualGraph.verticesNumber());
     }
@@ -163,6 +173,13 @@ class GraphTest {
         Graph<VertexOfDualGraph> dualGraph = preparation.prepareGraph(g, 1e-9);
         // graphWriter.printGraphToFile(dualGraph, "src/test/resources/testGraphs", "test_graph_2_dual.txt", false);
         Assertions.assertEquals(3, dualGraph.verticesNumber());
+    }
+
+    public boolean checkDualCorrectness(Graph<VertexOfDualGraph> dualGraph){
+        for (VertexOfDualGraph v : dualGraph.verticesArray()) {
+			if (v.getVerticesOfFace() == null) return false;
+		}
+        return true;
     }
 
 }

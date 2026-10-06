@@ -76,7 +76,7 @@ public class CutEvaluator {
                     for (VertexOfDualGraph child : sortedChildren) {
                         if (!visited.contains(child)) {
                             List<Vertex> nextPath = new ArrayList<>(current.path);
-                            Vertex crossed = findCrossedVertex(graph, current.node, child);
+                            Vertex crossed = findCrossedVertex(graph, dualGraph, current.node, child);
                             if (crossed != null) {
                                 nextPath.add(crossed);
                             }
@@ -90,8 +90,8 @@ public class CutEvaluator {
         return bestCut;
     }
 
-    private Vertex findCrossedVertex(Graph<Vertex> graph, VertexOfDualGraph v1, VertexOfDualGraph v2) {
-        Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDual = graph.edgeToDualVertexMap();
+    private Vertex findCrossedVertex(Graph<Vertex> graph, Graph<VertexOfDualGraph> dualGraph, VertexOfDualGraph v1, VertexOfDualGraph v2) {
+        Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDual = dualGraph.edgeToDualVertexMap();
         for (Map.Entry<Vertex, Map<Vertex, VertexOfDualGraph>> entry : edgeToDual.entrySet()) {
             Vertex u = entry.getKey();
             for (Map.Entry<Vertex, VertexOfDualGraph> inner : entry.getValue().entrySet()) {

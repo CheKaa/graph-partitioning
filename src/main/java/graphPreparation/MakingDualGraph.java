@@ -3,21 +3,18 @@ package graphPreparation;
 import java.util.*;
 
 import graph.*;
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.junit.jupiter.api.Assertions;
 
 public class MakingDualGraph {
 
    public Graph<VertexOfDualGraph> buildDualGraph(Graph<Vertex> gph) {
        Graph<VertexOfDualGraph> res = new Graph<>();
-       Graph<Vertex> undir = gph.makeUndirectedGraph();
-       EdgeOfGraph<Vertex>[] edgesList = undir.edgesArray();
+       EdgeOfGraph<Vertex>[] edgesList = gph.edgesArray();
        Map<Vertex, Integer> vertexInFaceNumber = gph.initVertexInFaceCounter();
        Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace = new HashMap<>();
-       Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph = undir.arrangeByAngle();
+       Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph = gph.arrangeByAngle();
        buildDualVertices(res, inFace, sortedGraph, edgesList, vertexInFaceNumber);
        addDualEdges(res, inFace);
        return res;
@@ -26,24 +23,25 @@ public class MakingDualGraph {
    private void addDualEdges(
       Graph<VertexOfDualGraph> res,
       Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace
-   ) {
-       EdgeOfGraph<Vertex> back;
-       double oldLength;
-       for (EdgeOfGraph<Vertex> edge : inFace.keySet()) {
-           back = new EdgeOfGraph<>(edge.end, edge.begin, edge.length);
-           if (inFace.get(edge).equals((inFace).get(back))) {
-               continue;
-           }
-          oldLength = 0;
-          if (res.getEdges().get(inFace.get(edge)).containsKey(inFace.get(back))) {
-              oldLength = res.getEdges().get(inFace.get(edge)).get(inFace.get(back)).length;
-              res.getEdges().get(inFace.get(edge)).remove(inFace.get(back));
-              res.getEdges().get(inFace.get(back)).remove(inFace.get(edge));
-          }
-          res.getEdges().get(inFace.get(edge)).put(inFace.get(back), new Edge(oldLength + edge.length / 2));
-          res.getEdges().get(inFace.get(back)).put(inFace.get(edge), new Edge(oldLength + edge.length / 2));
-       }
-   }
+    ) {
+        // TODO rewrite 
+        EdgeOfGraph<Vertex> back;
+        double oldLength;
+        for (EdgeOfGraph<Vertex> edge : inFace.keySet()) {
+            back = new EdgeOfGraph<>(edge.end, edge.begin, edge.length);
+            if (inFace.get(edge).equals((inFace).get(back))) {
+                continue;
+            }
+            oldLength = 0;
+            if (res.getEdges().get(inFace.get(edge)).containsKey(inFace.get(back))) {
+                oldLength = res.getEdges().get(inFace.get(edge)).get(inFace.get(back)).length;
+                res.getEdges().get(inFace.get(edge)).remove(inFace.get(back));
+                res.getEdges().get(inFace.get(back)).remove(inFace.get(edge));
+            }
+            res.getEdges().get(inFace.get(edge)).put(inFace.get(back), new Edge(oldLength + edge.length / 2));
+            res.getEdges().get(inFace.get(back)).put(inFace.get(edge), new Edge(oldLength + edge.length / 2));
+        }
+    }
 
     private void buildDualVertices(
             Graph<VertexOfDualGraph> res,
@@ -53,8 +51,9 @@ public class MakingDualGraph {
             EdgeOfGraph<Vertex>[] edgesList,
             Map<Vertex, Integer> vertexInFaceNumber
     ) {
-       ArrayList<Vertex> verticesOfFace = new ArrayList<>();
-       HashSet<EdgeOfGraph<Vertex>> inActualFace = new HashSet<>();
+        //TODO strange method (C like)
+        ArrayList<Vertex> verticesOfFace = new ArrayList<>();
+        HashSet<EdgeOfGraph<Vertex>> inActualFace = new HashSet<>();
         long vertName = 0;
         for (EdgeOfGraph<Vertex> vertexEdgeOfGraph : edgesList) {
             if (inFace.containsKey(vertexEdgeOfGraph)) {
@@ -62,7 +61,7 @@ public class MakingDualGraph {
                 continue;
             }
             findFace(verticesOfFace, inActualFace, sortedGraph, vertexEdgeOfGraph, vertexInFaceNumber);
-            Assertions.assertTrue(verticesOfFace.size() >= 3);
+            assert verticesOfFace.size() >= 3: "Too little vertices" ;
             vertName++;
             //System.out.print(vertName + " ");
             VertexOfDualGraph vert = new VertexOfDualGraph(
@@ -117,7 +116,8 @@ public class MakingDualGraph {
    }
 
    public VertexOfDualGraph findExternalFace(Graph<VertexOfDualGraph> dualGraph) {
-       Vertex leftTop = null;
+    //TODO currently do not work for encircled graphs where outerface has only one neighbour. Rewrite based on edges    
+    Vertex leftTop = null;
        Vertex rightBottom = null;
 
        for (VertexOfDualGraph dualVertex : dualGraph.verticesArray()) {

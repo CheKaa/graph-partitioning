@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -277,7 +276,7 @@ public class BubblePartitioning extends BalancedPartitioningOfPlanarGraphs {
         for (int i = 0; i < seedsNumber; i++) {
             seeds.add(vertList.get(i * step));
         }
-        Assertions.assertEquals(seeds.size(), seedsNumber);
+        assert seeds.size() == seedsNumber;
         return seeds;
     }
 

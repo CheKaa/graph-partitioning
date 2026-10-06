@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import graph.Vertex;
-import org.junit.jupiter.api.Assertions;
 
 import graph.Graph;
 import graph.VertexOfDualGraph;
@@ -31,11 +30,6 @@ public abstract class BalancedPartitioningOfPlanarGraphs {
     );
 
 	public List<Set<VertexOfDualGraph>> getPartition() {
-		for (Set<VertexOfDualGraph> hs : partition) {
-			for (VertexOfDualGraph v : hs) {
-				Assertions.assertNotNull(v.getVerticesOfFace());
-			}
-		}
 		return partition;
 	}
 

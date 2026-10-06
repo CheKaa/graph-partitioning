@@ -13,7 +13,6 @@ import java.util.Stack;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +100,7 @@ public class OriginalInertialFlowPartitioning extends BalancedPartitioningOfPlan
         stack.push(graph);
 
         while (!stack.isEmpty()) {
-            Graph<VertexOfDualGraph> currentGraph = stack.pop().makeUndirectedGraph();
+            Graph<VertexOfDualGraph> currentGraph = stack.pop();
 
             List<VertexOfDualGraph> vertices = new ArrayList<>(currentGraph.verticesArray());
             if (currentGraph.verticesWeight() < maxSumVerticesWeight) {
@@ -217,7 +216,7 @@ public class OriginalInertialFlowPartitioning extends BalancedPartitioningOfPlan
                     isConnectedWithSource.keySet().stream().filter(v -> !isConnectedWithSource.get(v)).collect(Collectors.toSet())));
         }
 
-        Assertions.assertEquals(graphWithFlow.verticesNumber(), subpartition.get(0).verticesNumber() + subpartition.get(1).verticesNumber());
+        assert graphWithFlow.verticesNumber() == subpartition.get(0).verticesNumber() + subpartition.get(1).verticesNumber();
 
         return subpartition;
     }

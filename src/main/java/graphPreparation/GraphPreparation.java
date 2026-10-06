@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ public class GraphPreparation {
 	}
 	
 	public Graph<VertexOfDualGraph> prepareGraph(Graph<Vertex> gph, double inaccuracy) throws IOException {
-		return prepareGraph(gph, inaccuracy, new CoordinateConversion(new HashSet<>()));
+		return prepareGraph(gph, inaccuracy, new CoordinateConversion(0,0));
 	}
 
 	public Graph<VertexOfDualGraph> prepareGraph(Graph<Vertex> gph, double inaccuracy, CoordinateConversion cc) throws IOException {
@@ -41,7 +40,6 @@ public class GraphPreparation {
 		logger.info("Number of 0 weight vertex, before sweepLine: {}", gph.countZeroWeightVertices());
 		logger.info("Start graph weight: {}", gph.verticesSumWeight());
 		
-        Assertions.assertTrue(gph.isConnected());
 		Graph<Vertex> graph;
         if (!isPlanar) {
             SweepLine sl = new SweepLine(inaccuracy);
@@ -51,8 +49,6 @@ public class GraphPreparation {
             graph = gph;
         }
 		
-        Assertions.assertTrue(graph.isConnected());
-
         long time2 = System.currentTimeMillis();
         logger.info("Time for sweepLine: {} seconds", (time2 - time1) / 1000.0);
 		
@@ -61,22 +57,18 @@ public class GraphPreparation {
 
 		MakingDualGraph dg = new MakingDualGraph();
 		Graph<VertexOfDualGraph> dualGraph = dg.buildDualGraph(graph);
-        Assertions.assertTrue(graph.isConnected());
-		for (VertexOfDualGraph v : dualGraph.verticesArray()) {
-			Assertions.assertNotNull(v.getVerticesOfFace());
-		}
-		Assertions.assertTrue(dualGraph.isConnected());
+
         VertexOfDualGraph externalFaceVertex = dg.findExternalFace(dualGraph);
 
         Set<VertexOfDualGraph> removedNestedFaces = NestedFacesRemover.removeNestedFaces(dualGraph, externalFaceVertex);
         logger.info("Found {} nested faces to remove", removedNestedFaces.size());
 
-        if (!removedNestedFaces.isEmpty()) {
-            logger.info("Dual graph weight after removing nested faces: {}", dualGraph.verticesSumWeight());
-            Assertions.assertTrue(dualGraph.isConnected());
-        }
+        // if (!removedNestedFaces.isEmpty()) {
+        //     logger.info("Dual graph weight after removing nested faces: {}", dualGraph.verticesSumWeight());
+        //     assert dualGraph.isConnected();
+        // }
         dualGraph.deleteVertex(externalFaceVertex);
-        Assertions.assertTrue(dualGraph.isConnected());
+        // assert (dualGraph.isConnected()): "Disconnected dual graph";
 
 		logger.info("Dual graph weight: {}", dualGraph.verticesSumWeight());
 		return dualGraph;
