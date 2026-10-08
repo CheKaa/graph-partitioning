@@ -10,7 +10,7 @@ import java.util.TreeSet;
 
 
 public class BoundSearcher {
-
+    // Find boundary of given set of faces of planar graph in clockwise order 
     public static List<Vertex> findBound(
             Graph<Vertex> graph,
             Set<VertexOfDualGraph> part

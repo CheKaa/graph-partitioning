@@ -175,4 +175,10 @@ public class Vertex extends Point {
 	public Vertex copy() {
 		return new Vertex(this.getName(), this, this.getWeight());
 	}
+
+	@Override 
+	public String toString(){
+		return Long.toString(name);
+
+	}
 }

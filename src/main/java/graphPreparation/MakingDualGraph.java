@@ -8,21 +8,21 @@ import org.slf4j.LoggerFactory;
 
 
 public class MakingDualGraph {
+    // Finds dual graph. Oreder of face boundary vertices is currently clockwise
+    public Graph<VertexOfDualGraph> buildDualGraph(Graph<Vertex> gph) {
+        Graph<VertexOfDualGraph> res = new Graph<>();
+        EdgeOfGraph<Vertex>[] edgesList = gph.edgesArray();
+        Map<Vertex, Integer> vertexInFaceNumber = gph.initVertexInFaceCounter();
+        Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace = new HashMap<>();
+        Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph = gph.arrangeByAngle();
+        buildDualVertices(res, inFace, sortedGraph, edgesList, vertexInFaceNumber);
+        addDualEdges(res, inFace);
+        return res;
+    }
 
-   public Graph<VertexOfDualGraph> buildDualGraph(Graph<Vertex> gph) {
-       Graph<VertexOfDualGraph> res = new Graph<>();
-       EdgeOfGraph<Vertex>[] edgesList = gph.edgesArray();
-       Map<Vertex, Integer> vertexInFaceNumber = gph.initVertexInFaceCounter();
-       Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace = new HashMap<>();
-       Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph = gph.arrangeByAngle();
-       buildDualVertices(res, inFace, sortedGraph, edgesList, vertexInFaceNumber);
-       addDualEdges(res, inFace);
-       return res;
-   }
-
-   private void addDualEdges(
-      Graph<VertexOfDualGraph> res,
-      Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace
+    private void addDualEdges(
+        Graph<VertexOfDualGraph> res,
+        Map<EdgeOfGraph<Vertex>, VertexOfDualGraph> inFace
     ) {
         // TODO rewrite 
         EdgeOfGraph<Vertex> back;
@@ -44,12 +44,12 @@ public class MakingDualGraph {
     }
 
     private void buildDualVertices(
-            Graph<VertexOfDualGraph> res,
-            Map<EdgeOfGraph<Vertex>,
-            VertexOfDualGraph> inFace,
-            Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph,
-            EdgeOfGraph<Vertex>[] edgesList,
-            Map<Vertex, Integer> vertexInFaceNumber
+        Graph<VertexOfDualGraph> res,
+        Map<EdgeOfGraph<Vertex>,
+        VertexOfDualGraph> inFace,
+        Map<Vertex, TreeSet<EdgeOfGraph<Vertex>>> sortedGraph,
+        EdgeOfGraph<Vertex>[] edgesList,
+        Map<Vertex, Integer> vertexInFaceNumber
     ) {
         //TODO strange method (C like)
         ArrayList<Vertex> verticesOfFace = new ArrayList<>();
