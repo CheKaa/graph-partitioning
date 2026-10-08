@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -161,6 +162,35 @@ public class PartitionDebugger {
         }
         sb.append("]}");
         saveGeoJSON(fileName, sb.toString());
+    }
+
+    public void dumpPathGeoJSON(List<Vertex> path, String fileName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\": \"FeatureCollection\", \"features\": [");
+        boolean first = true;
+        for (int i = 0; i < path.size() - 1; i++) {
+            if (!first) sb.append(",");
+            Vertex v1 = path.get(i);
+            Vertex v2 = path.get(i + 1);
+            Vertex geo1 = coordConv.fromEuclidean(v1);
+            Vertex geo2 = coordConv.fromEuclidean(v2);
+            sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [");
+            sb.append(String.format(java.util.Locale.ROOT, "[%f, %f], [%f, %f]", geo1.x, geo1.y, geo2.x, geo2.y));
+            sb.append("]}, \"properties\": {\"v1\": ").append(v1.getName()).append(", \"v2\": ").append(v2.getName()).append(", \"type\": \"path_edge\"}}");
+            first = false;
+        }
+        sb.append("]}");
+        saveGeoJSON(fileName, sb.toString());
+    }
+
+    public void dumpCycleGeoJSON(List<Vertex> cycle, String fileName) {
+        // A cycle is a path where the last vertex connects back to the first.
+        // We can reuse dumpPathGeoJSON logic but ensure the closing edge is added.
+        if (cycle == null || cycle.isEmpty()) return;
+        
+        List<Vertex> cycleWithClosing = new ArrayList<>(cycle);
+        cycleWithClosing.add(cycle.get(0));
+        dumpPathGeoJSON(cycleWithClosing, fileName);
     }
 
 
