@@ -1,15 +1,22 @@
 package partitioning.algorithms;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import graph.BoundSearcher;
 import graph.Graph;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
-import java.util.*;
-
-import javax.swing.plaf.synth.Region;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import partitioning.algorithms.DualForestBuilder.DualForest;
 import readWrite.CoordinateConversion;
 import readWrite.PartitionDebugger;
 
@@ -37,6 +44,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
         // In a typical planar graph, the outer face forms the initial boundary.
         // We extract the boundary vertices from the dual graph's outer face or
         // from a known boundary provider.
+        // currently boundary in clockwise order
         List<Vertex> initialBoundary = extractInitialBoundary(simpleGraph);
         
         if (initialBoundary == null || initialBoundary.isEmpty()) {
@@ -70,28 +78,34 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
 
         while (!queue.isEmpty()) {
             PartitionRegion region = queue.poll();
-            double regionWeight = region.dualVertices.stream().mapToDouble(v -> v.getWeight()).sum();
 
-            if (regionWeight <= maxWeight) {
+            var res = splitInTwoParts(region, graph, maxWeight);
+
+            if (res == null){
                 finalPartitions.add(region.dualVertices);
                 continue;
             }
 
-            var res = splitInTwoParts(region, graph, maxWeight, regionWeight);
-            if (res == null){
+            if (res.length == 1){
                 finalPartitions.add(region.dualVertices);
-            } else {
-                queue.add(res[0]);
-                queue.add(res[1]);
+                continue;
             }
+
+            queue.add(res[0]);
+            queue.add(res[1]);
         }
 
         return finalPartitions;
     }
 
-    public PartitionRegion[] splitInTwoParts(PartitionRegion region, Graph<Vertex> simpleGraph, double maxWeight, double regionWeight){
+    public PartitionRegion[] splitInTwoParts(PartitionRegion region, Graph<Vertex> simpleGraph, double maxWeight){
+        double regionWeight = region.dualVertices.stream().mapToDouble(v -> v.getWeight()).sum();
+
+        if (regionWeight <= maxWeight) {
+            return new PartitionRegion[]{region};
+        }
         BoundaryVertexFinder<Vertex> boundaryFinder = new BoundaryVertexFinder<>();
-        DualForestBuilder<Vertex> forestBuilder = new DualForestBuilder<>();
+        DualForestBuilder forestBuilder = new DualForestBuilder();
         CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
         var dualGraph = this.graph;
 
@@ -105,10 +119,9 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
         Map<Vertex, Vertex> spt = MultiSourceSPT.computeSPTForest(simpleGraph, startBoundary);
 
 
-        Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest = forestBuilder.buildDualForest(simpleGraph, dualGraph, spt,  startBoundary, finishBoundary);
+        DualForest forest = forestBuilder.buildDualForest(simpleGraph, dualGraph, spt,  startBoundary, finishBoundary);
 
-        List<VertexOfDualGraph> roots = getDualRoots(dualGraph, region.boundary);
-        Cut bestCut = cutEvaluator.evaluateBestCut(simpleGraph, dualGraph, dualForest, roots, regionWeight, minRelPartSize);
+        Cut bestCut = cutEvaluator.evaluateBestCut(simpleGraph, dualGraph, forest, spt, regionWeight, minRelPartSize);
 
         if (bestCut == null) {
             return null;
@@ -118,7 +131,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
             if (debugger != null) {
                 debugger.dumpBoundaryGeoJSON(region.boundary, "region_boundary_" + System.nanoTime());
                 debugger.dumpSPTGeoJSON(spt, "spt_" + System.nanoTime());
-                debugger.dumpDualTreeGeoJSON(dualForest, "dual_tree_" + System.nanoTime());
+                debugger.dumpDualTreeGeoJSON(forest.forest(), "dual_tree_" + System.nanoTime());
             }
             PartitionRegion region1 = new PartitionRegion(bestCut.part1, newBoundaries[0]);
             PartitionRegion region2 = new PartitionRegion(bestCut.part2, newBoundaries[1]);
@@ -157,7 +170,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
 
     private List<Vertex>[] updateBoundaries(List<Vertex> boundary, Cut cut) {
         if (cut == null || cut.cutPath == null || cut.cutPath.isEmpty()) {
-            return new List[]{boundary, boundary};
+            return null;
         }
 
         Vertex startVertex = cut.cutPath.get(0);

@@ -3,6 +3,7 @@ package partitioning.algorithms;
 import graph.Graph;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
+import partitioning.algorithms.DualForestBuilder.DualForest;
 import graph.EdgeOfGraph;
 import java.util.*;
 
@@ -16,8 +17,8 @@ public class CutEvaluator {
     public Cut evaluateBestCut(
             Graph<Vertex> graph,
             Graph<VertexOfDualGraph> dualGraph,
-            Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest,
-            List<VertexOfDualGraph> roots,
+            DualForest dualRootedForest,
+            Map<Vertex, Vertex> spt,
             double totalWeight,
             double minRelPartSize
         ) {
@@ -29,6 +30,8 @@ public class CutEvaluator {
          */
         Cut bestCut = null;
         double minCost = Double.MAX_VALUE;
+        var roots = dualRootedForest.roots();
+        var dualForest = dualRootedForest.forest();
 
         Map<VertexOfDualGraph, TreeSet<EdgeOfGraph<VertexOfDualGraph>>> sortedDualEdges = dualGraph.arrangeByAngle();
 
@@ -88,6 +91,36 @@ public class CutEvaluator {
         }
 
         return bestCut;
+    }
+
+    public Map<Vertex, Vertex> mapVerticesToBoundary(Map<Vertex, Vertex> spt, Set<Vertex> boundary) {
+        Map<Vertex, Vertex> vertexToBoundary = new HashMap<>();
+        
+        for (Vertex v : spt.keySet()) {
+            if (vertexToBoundary.containsKey(v)) continue;
+
+            List<Vertex> path = new ArrayList<>();
+            Vertex current = v;
+            Vertex boundaryVertex = null;
+
+            while (!vertexToBoundary.containsKey(current)) {
+                if (boundary.contains(current)) {
+                    boundaryVertex = current;
+                    break;
+                }
+                path.add(current);
+                current = spt.get(current);
+            }
+
+            if (boundaryVertex == null){
+                boundaryVertex = vertexToBoundary.get(current);
+            }
+
+            for (Vertex node : path) {
+                vertexToBoundary.put(node, boundaryVertex);
+            }
+        }
+        return vertexToBoundary;
     }
 
     private Vertex findCrossedVertex(Graph<Vertex> graph, Graph<VertexOfDualGraph> dualGraph, VertexOfDualGraph v1, VertexOfDualGraph v2) {
