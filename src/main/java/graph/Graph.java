@@ -14,6 +14,10 @@ import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Graph
+ * @param <T>
+ */
 public class Graph<T extends Vertex> {
     /*
      * vertices - keys for HashMap
@@ -407,6 +411,7 @@ public class Graph<T extends Vertex> {
         }
     }
 
+    // For oriented edge gives face that contains this edge on the boundary
     public Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDualVertexMap() {
         if (edgeToDualVertex == null) {
             edgeToDualVertex = new HashMap<>();

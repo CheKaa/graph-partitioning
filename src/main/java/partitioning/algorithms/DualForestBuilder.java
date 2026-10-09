@@ -3,7 +3,7 @@ package partitioning.algorithms;
 import graph.Graph;
 import graph.Vertex;
 import graph.VertexOfDualGraph;
-import partitioning.entities.Pair;
+import partitioning.entities.UnOrdPair;
 
 import java.util.*;
 
@@ -14,7 +14,7 @@ public class DualForestBuilder {
     public DualForest buildDualForest(
             Graph<Vertex> graph, 
             Graph<VertexOfDualGraph> dualGraph, 
-            Map<Vertex, Vertex> sptForest,
+            SPTResult<Vertex> sptForest,
             List<Vertex> startingBoundary,
             List<Vertex> finishingBoundary
         ) {
@@ -24,11 +24,11 @@ public class DualForestBuilder {
         }
 
         // Create a set of edges that form the starting boundary to avoid crossing them
-        HashSet<Pair> startBoundaryEdges = new HashSet<>();
+        HashSet<UnOrdPair> startBoundaryEdges = new HashSet<>();
         Vertex curr = startingBoundary.get(0);
         for (int i = 1; i < startingBoundary.size(); i++) {
             Vertex next = startingBoundary.get(i);
-            startBoundaryEdges.add(new Pair(curr, next));
+            startBoundaryEdges.add(new UnOrdPair(curr, next));
             curr = next;
         }
 
@@ -37,12 +37,12 @@ public class DualForestBuilder {
 
         // We start building the forest from the finishing boundary
         Queue<VertexOfDualGraph> queue = new LinkedList<>();
-        HashMap<VertexOfDualGraph, Pair> parent = new HashMap<>();
-        SPTCheck forestCheck = new SPTCheck(sptForest);
+        HashMap<VertexOfDualGraph, UnOrdPair> parent = new HashMap<>();
+        SPTCheck forestCheck = new SPTCheck(sptForest.parents);
         ArrayList<VertexOfDualGraph> roots = new ArrayList<>();
         ArrayList<VertexOfDualGraph> leaves = new ArrayList<>();
 
-        Set<Pair> finishBoundaryEdges = new HashSet<>();
+        Set<UnOrdPair> finishBoundaryEdges = new HashSet<>();
         curr = finishingBoundary.get(0);
         for (int i = 1; i < finishingBoundary.size(); i++) {
             Vertex next = finishingBoundary.get(i);
@@ -51,7 +51,7 @@ public class DualForestBuilder {
                 continue;
             }
 
-            Pair edgePair = new Pair(curr, next);
+            UnOrdPair edgePair = new UnOrdPair(curr, next);
             finishBoundaryEdges.add(edgePair);
             if (edgeToDual.containsKey(curr) && edgeToDual.get(curr).containsKey(next)) {
                 VertexOfDualGraph dualV = edgeToDual.get(curr).get(next);
@@ -66,7 +66,7 @@ public class DualForestBuilder {
 
         while (!queue.isEmpty()) {
             VertexOfDualGraph u = queue.poll();
-            Pair edgeWitness = parent.get(u);
+            UnOrdPair edgeWitness = parent.get(u);
             var forestNeibs = dualForest.get(u);
             
             List<Vertex> faceVertices = u.getVerticesOfFace();
@@ -74,7 +74,7 @@ public class DualForestBuilder {
             for (int i = 0; i < faceVertices.size(); i++) {
                 Vertex v1 = faceVertices.get(i);
                 Vertex v2 = faceVertices.get((i + 1) % faceVertices.size());
-                if (new Pair(v1, v2).equals(edgeWitness)) {
+                if (new UnOrdPair(v1, v2).equals(edgeWitness)) {
                     startId = i;
                     break;
                 }
@@ -89,7 +89,7 @@ public class DualForestBuilder {
                 Vertex v2 = faceVertices.get(idx2);
                 if (forestCheck.check(v1, v2)) continue;
 
-                Pair edgePair = new Pair(v1, v2);
+                UnOrdPair edgePair = new UnOrdPair(v1, v2);
 
                 assert(!edgePair.equals(edgeWitness));
                 
@@ -99,6 +99,101 @@ public class DualForestBuilder {
 
                 // Check if the edge is in the SPT forest
 
+
+                VertexOfDualGraph dualV = edgeToDual.get(v2).get(v1); // take neighbour side - edge in opposite direction
+
+                if (dualV != null && !dualV.equals(u)) {
+                    if (!parent.containsKey(dualV)) {
+                        // Rooted forest: u is parent, dualV is child
+                        forestNeibs.add(dualV);
+                        parent.put(dualV, edgePair);
+                        queue.add(dualV);
+                        isLeaf = false;
+                    }
+                }
+            
+            }
+            if (isLeaf){
+                leaves.add(u);
+            }
+        }
+
+        return new DualForest(dualForest, roots, leaves, parent);
+    }
+
+
+    public DualForest buildDualTree(
+            Graph<Vertex> graph, 
+            Graph<VertexOfDualGraph> dualGraph, 
+            SPTResult<Vertex> sptForest,
+            List<Vertex> boundary
+        ) {
+        Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest = new HashMap<>();
+        for (VertexOfDualGraph v : dualGraph.vertices()) {
+            dualForest.put(v, new ArrayList<>());
+        }
+
+        // Map to find which dual vertex corresponds to an edge in the original graph
+        Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDual = dualGraph.edgeToDualVertexMap();
+
+        // We start building the forest from the finishing boundary
+        Queue<VertexOfDualGraph> queue = new LinkedList<>();
+        HashMap<VertexOfDualGraph, UnOrdPair> parent = new HashMap<>();
+        SPTCheck forestCheck = new SPTCheck(sptForest.parents);
+        ArrayList<VertexOfDualGraph> roots = new ArrayList<>();
+        ArrayList<VertexOfDualGraph> leaves = new ArrayList<>();
+
+        Set<UnOrdPair> finishBoundaryEdges = new HashSet<>();
+        Vertex curr = boundary.get(0);
+        for (int i = 1; i < boundary.size(); i++) {
+            Vertex next = boundary.get(i);
+
+            assert !forestCheck.check(curr, next);
+
+            UnOrdPair edgePair = new UnOrdPair(curr, next);
+            finishBoundaryEdges.add(edgePair);
+            VertexOfDualGraph dualV = edgeToDual.get(curr).get(next);
+            if (i==1) {
+                queue.add(dualV);
+                parent.put(dualV, edgePair);
+                roots.add(dualV);
+            }
+            curr = next;
+        }
+
+        while (!queue.isEmpty()) {
+            VertexOfDualGraph u = queue.poll();
+            UnOrdPair edgeWitness = parent.get(u);
+            var forestNeibs = dualForest.get(u);
+            
+            List<Vertex> faceVertices = u.getVerticesOfFace();
+            int startId = 0;
+            for (int i = 0; i < faceVertices.size(); i++) {
+                Vertex v1 = faceVertices.get(i);
+                Vertex v2 = faceVertices.get((i + 1) % faceVertices.size());
+                if (new UnOrdPair(v1, v2).equals(edgeWitness)) {
+                    startId = i;
+                    break;
+                }
+            }
+
+            boolean isLeaf = true;
+
+            for (int i = 1; i <= faceVertices.size()-1; i++) {
+                int idx1 = (startId + i) % faceVertices.size();
+                int idx2 = (idx1 + 1) % faceVertices.size();
+                Vertex v1 = faceVertices.get(idx1);
+                Vertex v2 = faceVertices.get(idx2);
+                if (forestCheck.check(v1, v2)) continue;
+
+                UnOrdPair edgePair = new UnOrdPair(v1, v2);
+
+                assert(!edgePair.equals(edgeWitness));
+                
+                // Check if the edge is on the boundary
+                if (finishBoundaryEdges.contains(edgePair)) continue;
+
+                // Check if the edge is in the SPT forest
 
                 VertexOfDualGraph dualV = edgeToDual.get(v2).get(v1); // take neighbour side - edge in opposite direction
 
@@ -145,6 +240,6 @@ public class DualForestBuilder {
         Map<VertexOfDualGraph, List<VertexOfDualGraph>> forest,
         List<VertexOfDualGraph> roots, // In boundary order
         List<VertexOfDualGraph> leaves, // in order of appearence from most left to most right
-        HashMap<VertexOfDualGraph, Pair> parent
+        HashMap<VertexOfDualGraph, UnOrdPair> parent
     ) {}
 }

@@ -5,11 +5,11 @@ import graph.Vertex;
 /**
  * Pair
  */
-public class Pair {
+public class UnOrdPair {
     public Vertex one;
     public Vertex two;
 
-    public Pair(Vertex one, Vertex two){
+    public UnOrdPair(Vertex one, Vertex two){
         if (one.name > two.name){
             this.one = two;
             this.two = one;
@@ -23,7 +23,7 @@ public class Pair {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Pair pair = (Pair) o;
+        UnOrdPair pair = (UnOrdPair) o;
         return java.util.Objects.equals(one.name, pair.one.name) && java.util.Objects.equals(two.name, pair.two.name);
     }
 

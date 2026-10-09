@@ -20,13 +20,13 @@ import partitioning.algorithms.DualForestBuilder.DualForest;
 import readWrite.CoordinateConversion;
 import readWrite.PartitionDebugger;
 
-public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
-    private static final Logger logger = LoggerFactory.getLogger(DualGraphPartitioner.class);
+public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
+    private static final Logger logger = LoggerFactory.getLogger(OneShotPartitioner.class);
     private double lengthPriority;
     private double minRelPartSize;
     public PartitionDebugger debugger;
 
-    public DualGraphPartitioner(double lengthPriority, double minRelPartSize) {
+    public OneShotPartitioner(double lengthPriority, double minRelPartSize) {
         this.lengthPriority = lengthPriority;
         this.minRelPartSize = minRelPartSize;
     }
@@ -104,23 +104,17 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
         if (regionWeight <= maxWeight) {
             return new PartitionRegion[]{region};
         }
-        BoundaryVertexFinder<Vertex> boundaryFinder = new BoundaryVertexFinder<>();
         DualForestBuilder forestBuilder = new DualForestBuilder();
         CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
         var dualGraph = this.graph;
 
-        // 1. Find most distant boundary vertices
-        int[] distIdx = boundaryFinder.findMostDistantBoundaryVertices(simpleGraph, region.boundary);
+        // 2. Multi-source Dijkstra from boundary
 
-        // 2. Multi-source Dijkstra from first part of boundary
-        List<Vertex> startBoundary = getCyclePart(region.boundary, distIdx[0], distIdx[1]);
-        List<Vertex> finishBoundary = getCyclePart(region.boundary, distIdx[1], distIdx[0]);
+        SPTResult<Vertex> spt = MultiSourceSPT.computeSPTForest(simpleGraph, region.boundary);
 
-        var sptRes = MultiSourceSPT.computeSPTForest(simpleGraph, startBoundary);
+        DualForest forest = forestBuilder.buildDualTree(simpleGraph, dualGraph, spt, region.boundary);
 
-        DualForest forest = forestBuilder.buildDualForest(simpleGraph, dualGraph, sptRes, startBoundary, finishBoundary);
-
-        Cut bestCut = cutEvaluator.evaluateBestCut(simpleGraph, dualGraph, forest, sptRes, regionWeight, minRelPartSize);
+        Cut bestCut = cutEvaluator.evaluateBestCutForTree(simpleGraph, dualGraph, forest, spt, regionWeight, minRelPartSize, region.boundary);
 
         if (bestCut == null) {
             return null;
@@ -129,7 +123,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
             
             if (debugger != null) {
                 debugger.dumpBoundaryGeoJSON(region.boundary, "region_boundary_" + System.nanoTime());
-                debugger.dumpSPTGeoJSON(sptRes.parents, "spt_" + System.nanoTime());
+                debugger.dumpSPTGeoJSON(spt.parents, "spt_" + System.nanoTime());
                 debugger.dumpDualTreeGeoJSON(forest.forest(), "dual_tree_" + System.nanoTime());
             }
             PartitionRegion region1 = new PartitionRegion(bestCut.part1, newBoundaries[0]);
