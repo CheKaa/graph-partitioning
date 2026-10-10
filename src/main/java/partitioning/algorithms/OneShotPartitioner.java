@@ -110,12 +110,20 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
             regionFaces.add(face.getVerticesOfFace());
         }
         Graph<Vertex> regionGraph = simpleGraph.createSubgraphFromFaces(regionFaces);
+        String suffix = "g_size_" + regionGraph.vertices().size();
+
         Graph<VertexOfDualGraph> dualgraph = this.graph;
         CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
 
         SPForest<Vertex> spt = MultiSourceSPT.computeSPTForest(regionGraph, region.boundary);
 
         DualForest forest = DualForestBuilder.buildDualTree(regionGraph, dualgraph, spt, region.boundary);
+        
+        if (debugger != null) {
+            debugger.dumpBoundaryGeoJSON(region.boundary, "region_boundary_" + suffix);
+            debugger.dumpSPTGeoJSON(spt.parents, "spt_" + suffix);
+            debugger.dumpDualTreeGeoJSON(forest.forest(), "dual_tree_" + suffix);
+        }
 
         Cut bestCut = cutEvaluator.evaluateBestCutForTree(
                 regionGraph, dualgraph, forest, spt, regionWeight, minRelPartSize, region);
@@ -126,11 +134,9 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
             List<Vertex>[] newBoundaries = updateBoundaries(region.boundary, bestCut);
             
             if (debugger != null) {
-                String suffix = "g_size_" + regionGraph.vertices().size();
-                debugger.dumpBoundaryGeoJSON(region.boundary, "region_boundary_" + suffix);
-                debugger.dumpSPTGeoJSON(spt.parents, "spt_" + suffix);
-                debugger.dumpDualTreeGeoJSON(forest.forest(), "dual_tree_" + suffix);
                 debugger.dumpPathGeoJSON(bestCut.cutPath, "cut_path_" + suffix);
+                debugger.dumpBoundaryGeoJSON(newBoundaries[0], "boundary1_" + suffix);
+                debugger.dumpBoundaryGeoJSON(newBoundaries[1], "boundary2_" + suffix);
             }
             PartitionRegion region1 = new PartitionRegion(bestCut.part1, newBoundaries[0]);
             PartitionRegion region2 = new PartitionRegion(bestCut.part2, newBoundaries[1]);
@@ -166,23 +172,21 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
         List<Vertex> cutPathVertices = new ArrayList<>(cut.cutPath);
 
         // Part 1: startIdx -> endIdx along boundary, then cutPath reversed
-        int curr1 = startIdx;
-        while (curr1 != endIdx) {
-            boundary2.add(boundary.get(curr1));
-            curr1 = (curr1 + 1) % boundary.size();
+        int curr = (startIdx + 1) % boundary.size();
+        while (curr != endIdx) {
+            boundary2.add(boundary.get(curr));
+            curr = (curr + 1) % boundary.size();
         }
-        boundary2.add(boundary.get(endIdx));
         List<Vertex> revCut = new ArrayList<>(cutPathVertices);
         Collections.reverse(revCut);
         boundary2.addAll(revCut);
 
         // Part 2: endIdx -> startIdx along boundary, then cutPath
-        int curr2 = endIdx;
-        while (curr2 != startIdx) {
-            boundary1.add(boundary.get(curr2));
-            curr2 = (curr2 + 1) % boundary.size();
+        curr = (endIdx + 1) % boundary.size();
+        while (curr != startIdx) {
+            boundary1.add(boundary.get(curr));
+            curr = (curr + 1) % boundary.size();
         }
-        boundary1.add(boundary.get(startIdx));
         boundary1.addAll(cutPathVertices);
 
         return new List[]{boundary1, boundary2};

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,30 +41,34 @@ public class PartitionDebugger {
         saveGeoJSON(fileName, sb.toString());
     }
 
-    public void dumpPartitionGeoJSON(Collection<VertexOfDualGraph> partition, int partId, String fileName) {
+    public void dumpPartitionGeoJSON(List<Set<VertexOfDualGraph>> partition, String fileName) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"type\": \"FeatureCollection\", \"features\": [");
         boolean firstFeature = true;
+        int partId = 0;
+        for (Set<VertexOfDualGraph> part : partition) {
+            for (VertexOfDualGraph face : part) {
+                List<Vertex> faceVertices = face.getVerticesOfFace();
+                if (faceVertices.size() < 3) {
+                    throw new IllegalArgumentException("Partition face " + face.getName() + " has fewer than 3 vertices");
+                }
 
-        for (VertexOfDualGraph face : partition) {
-            List<Vertex> faceVertices = face.getVerticesOfFace();
-            if (faceVertices.size() < 3) {
-                throw new IllegalArgumentException("Partition face " + face.getName() + " has fewer than 3 vertices");
+                if (!firstFeature) sb.append(",");
+                
+                sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
+                for (int i = 0; i <= faceVertices.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    Vertex vertex = faceVertices.get(i % faceVertices.size());
+                    Vertex geoVertex = coordConv.fromEuclidean(vertex);
+                    sb.append(String.format(java.util.Locale.ROOT, "[%f, %f]", geoVertex.x, geoVertex.y));
+                }
+                sb.append("]]}, \"properties\": {\"name\": ").append(face.getName())
+                        .append(", \"part_id\": ").append(partId)
+                        .append(", \"weight\": ").append(String.format(java.util.Locale.ROOT, "%f", face.getWeight()))
+                        .append(", \"type\": \"partition_face\"}}");
+                firstFeature = false;
             }
-
-            if (!firstFeature) sb.append(",");
-            sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
-            for (int i = 0; i <= faceVertices.size(); i++) {
-                if (i > 0) sb.append(", ");
-                Vertex vertex = faceVertices.get(i % faceVertices.size());
-                Vertex geoVertex = coordConv.fromEuclidean(vertex);
-                sb.append(String.format(java.util.Locale.ROOT, "[%f, %f]", geoVertex.x, geoVertex.y));
-            }
-            sb.append("]]}, \"properties\": {\"name\": ").append(face.getName())
-                    .append(", \"part_id\": ").append(partId)
-                    .append(", \"weight\": ").append(String.format(java.util.Locale.ROOT, "%f", face.getWeight()))
-                    .append(", \"type\": \"partition_face\"}}");
-            firstFeature = false;
+            partId++;
         }
 
         sb.append("]}");

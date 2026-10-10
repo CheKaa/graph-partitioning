@@ -184,29 +184,33 @@ public class CutEvaluator {
         if (bestDualVertex == null) return null;
 
         // 1. Get the set of faces (dual vertices) in the subtree rooted at bestDualVertex
-        Set<VertexOfDualGraph> partition1Faces = getSubtreeVertices(bestDualVertex, dualTree);
+        Set<VertexOfDualGraph> part1 = getSubtreeVertices(bestDualVertex, dualTree);
 
         // 2. Get the complement set of faces
-        HashSet<VertexOfDualGraph> allFaces = new HashSet<>(region.dualVertices);
-        HashSet<VertexOfDualGraph> partition2Faces = new HashSet<>(region.dualVertices);
-        partition2Faces.removeAll(partition1Faces);
+        HashSet<VertexOfDualGraph> part2 = new HashSet<>(region.dualVertices);
+        part2.removeAll(part1);
 
         // 3. Reconstruct the path representing the cut.
         // The cut is formed by joining two paths from SPT joint by an edge that connects bestDualVertex and its parent.
         
         // Use the parent map in DualForest to find the edge connecting bestDualVertex and its parent.
         UnOrdPair dualEdge = dualTree.parent().get(bestDualVertex);
-        if (dualEdge == null) return null;
-
-        Vertex vertex1 = dualEdge.one;
-        Vertex vertex2 = dualEdge.two;
+        Vertex vertex1;
+        Vertex vertex2;
+        if (edgeToDualVertexMap.get(dualEdge.one).get(dualEdge.two) == bestDualVertex) {
+            vertex1 = dualEdge.one;
+            vertex2 = dualEdge.two;
+        } else {
+            vertex1 = dualEdge.two;
+            vertex2 = dualEdge.one;
+        }
 
         List<Vertex> cutPath = sptRes.getPathToSource(vertex1);
         cutPath.addAll(sptRes.getPathToSource(vertex2, true));
 
         return new Cut(
-            partition1Faces, 
-            partition2Faces, 
+            part1, 
+            part2, 
             cutPath,
             bestLength, 
             bestWeight,
