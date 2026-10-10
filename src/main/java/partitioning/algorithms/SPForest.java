@@ -7,11 +7,11 @@ import java.util.*;
  * Represents the result of a Shortest Path Tree (SPT) computation,
  * containing both the tree structure (parent pointers) and the distances from sources.
  */
-public class SPTResult<T extends Vertex> {
+public class SPForest<T extends Vertex> {
     final Map<T, T> parents;
     final Map<T, Double> distances;
 
-    public SPTResult(Map<T, T> parents, Map<T, Double> distances) {
+    public SPForest(Map<T, T> parents, Map<T, Double> distances) {
         this.parents = parents;
         this.distances = distances;
     }

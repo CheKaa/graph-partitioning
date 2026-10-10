@@ -184,7 +184,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
             if (v.equals(endVertex)) endIdx = i;
         }
 
-        assert (startIdx <0 || endIdx <0);
+        assert startIdx >= 0 && endIdx >= 0 : "Both cut endpoints must lie on the region boundary";
 
         List<Vertex> boundary1 = new ArrayList<>();
         List<Vertex> boundary2 = new ArrayList<>();

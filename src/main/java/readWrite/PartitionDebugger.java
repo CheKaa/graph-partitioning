@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -19,6 +20,53 @@ public class PartitionDebugger {
 
     public PartitionDebugger(CoordinateConversion coordConv) {
         this.coordConv = coordConv;
+    }
+
+    public void dumpVertices(Collection<Vertex> vertices, String fileName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\": \"FeatureCollection\", \"features\": [");
+        boolean first = true;
+        for (Vertex vertex : vertices) {
+            if (!first) sb.append(",");
+            Vertex geoVertex = coordConv.fromEuclidean(vertex);
+            sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [");
+            sb.append(String.format(java.util.Locale.ROOT, "%f, %f", geoVertex.x, geoVertex.y));
+            sb.append("]}, \"properties\": {\"name\": ").append(vertex.getName())
+                    .append(", \"type\": \"graph_vertex\"}}");
+            first = false;
+        }
+        sb.append("]}");
+        saveGeoJSON(fileName, sb.toString());
+    }
+
+    public void dumpPartitionGeoJSON(Collection<VertexOfDualGraph> partition, int partId, String fileName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\": \"FeatureCollection\", \"features\": [");
+        boolean firstFeature = true;
+
+        for (VertexOfDualGraph face : partition) {
+            List<Vertex> faceVertices = face.getVerticesOfFace();
+            if (faceVertices.size() < 3) {
+                throw new IllegalArgumentException("Partition face " + face.getName() + " has fewer than 3 vertices");
+            }
+
+            if (!firstFeature) sb.append(",");
+            sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"Polygon\", \"coordinates\": [[");
+            for (int i = 0; i <= faceVertices.size(); i++) {
+                if (i > 0) sb.append(", ");
+                Vertex vertex = faceVertices.get(i % faceVertices.size());
+                Vertex geoVertex = coordConv.fromEuclidean(vertex);
+                sb.append(String.format(java.util.Locale.ROOT, "[%f, %f]", geoVertex.x, geoVertex.y));
+            }
+            sb.append("]]}, \"properties\": {\"name\": ").append(face.getName())
+                    .append(", \"part_id\": ").append(partId)
+                    .append(", \"weight\": ").append(String.format(java.util.Locale.ROOT, "%f", face.getWeight()))
+                    .append(", \"type\": \"partition_face\"}}");
+            firstFeature = false;
+        }
+
+        sb.append("]}");
+        saveGeoJSON(fileName, sb.toString());
     }
 
     public void dumpBoundaryGeoJSON(List<Vertex> boundary, String fileName) {
@@ -115,14 +163,18 @@ public class PartitionDebugger {
         for (Vertex u : graph.vertices()) {
             Map<Vertex, graph.Edge> neighbors = graph.getEdges().get(u);
             if (neighbors == null) continue;
-            for (Vertex v : neighbors.keySet()) {
+            for (Map.Entry<Vertex, graph.Edge> edgeEntry : neighbors.entrySet()) {
+                Vertex v = edgeEntry.getKey();
                 if (u.getName() > v.getName()) continue; // Undirected edges once
                 if (!first) sb.append(",");
                 Vertex geoU = coordConv.fromEuclidean(u);
                 Vertex geoV = coordConv.fromEuclidean(v);
+                double length = edgeEntry.getValue().length;
                 sb.append("{\"type\": \"Feature\", \"geometry\": {\"type\": \"LineString\", \"coordinates\": [");
                 sb.append(String.format(java.util.Locale.ROOT, "[%f, %f], [%f, %f]", geoU.x, geoU.y, geoV.x, geoV.y));
-                sb.append("]}, \"properties\": {\"u\": ").append(u.getName()).append(", \"v\": ").append(v.getName()).append(", \"type\": \"graph_edge\"}}");
+                sb.append("]}, \"properties\": {\"u\": ").append(u.getName()).append(", \"v\": ").append(v.getName())
+                        .append(", \"length\": ").append(String.format(java.util.Locale.ROOT, "%f", length))
+                        .append(", \"type\": \"graph_edge\"}}");
                 first = false;
             }
         }

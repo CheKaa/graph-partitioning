@@ -46,7 +46,7 @@ public class DualPartitioningTest {
     void testMultiSourceSPT() {
         Graph<Vertex> graph = TestGraphUtils.createGridGraph(2, 2);
         List<Vertex> boundary = getGridBoundary(graph, 2, 2);
-        Map<Vertex, Vertex> spt = MultiSourceSPT.computeSPTForest(graph, List.of(boundary.get(0)));
+        SPForest<Vertex> spt = MultiSourceSPT.computeSPTForest(graph, List.of(boundary.get(0)));
         assertNotNull(spt);
     }
 

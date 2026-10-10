@@ -10,7 +10,7 @@ public class MultiSourceSPT {
     /**
      * Time Complexity: O(E log V) where E is the number of edges and V is the number of vertices.
      */
-    public static <T extends Vertex> SPTResult<T> computeSPTForest(Graph<T> graph, List<T> sources) {
+    public static <T extends Vertex> SPForest<T> computeSPTForest(Graph<T> graph, List<T> sources) {
         Map<T, Double> distances = new HashMap<>();
         Map<T, T> previous = new HashMap<>();
         PriorityQueue<VertexDistance> queue = new PriorityQueue<>(Comparator.comparingDouble(VertexDistance::distance));
@@ -46,6 +46,6 @@ public class MultiSourceSPT {
             }
         }
 
-        return new SPTResult<>(previous, distances);
+        return new SPForest<>(previous, distances);
     }
 }

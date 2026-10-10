@@ -14,7 +14,7 @@ public class DualForestBuilder {
     public DualForest buildDualForest(
             Graph<Vertex> graph, 
             Graph<VertexOfDualGraph> dualGraph, 
-            SPTResult<Vertex> sptForest,
+            SPForest<Vertex> sptForest,
             List<Vertex> startingBoundary,
             List<Vertex> finishingBoundary
         ) {
@@ -122,16 +122,13 @@ public class DualForestBuilder {
     }
 
 
-    public DualForest buildDualTree(
+    public static DualForest buildDualTree(
             Graph<Vertex> graph, 
             Graph<VertexOfDualGraph> dualGraph, 
-            SPTResult<Vertex> sptForest,
+            SPForest<Vertex> sptForest,
             List<Vertex> boundary
         ) {
         Map<VertexOfDualGraph, List<VertexOfDualGraph>> dualForest = new HashMap<>();
-        for (VertexOfDualGraph v : dualGraph.vertices()) {
-            dualForest.put(v, new ArrayList<>());
-        }
 
         // Map to find which dual vertex corresponds to an edge in the original graph
         Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDual = dualGraph.edgeToDualVertexMap();
@@ -143,7 +140,8 @@ public class DualForestBuilder {
         ArrayList<VertexOfDualGraph> roots = new ArrayList<>();
         ArrayList<VertexOfDualGraph> leaves = new ArrayList<>();
 
-        Set<UnOrdPair> finishBoundaryEdges = new HashSet<>();
+        Set<UnOrdPair> boundaryEdges = new HashSet<>();
+        // TODO replace unordered pair with ordered
         Vertex curr = boundary.get(0);
         for (int i = 1; i < boundary.size(); i++) {
             Vertex next = boundary.get(i);
@@ -151,7 +149,7 @@ public class DualForestBuilder {
             assert !forestCheck.check(curr, next);
 
             UnOrdPair edgePair = new UnOrdPair(curr, next);
-            finishBoundaryEdges.add(edgePair);
+            boundaryEdges.add(edgePair);
             VertexOfDualGraph dualV = edgeToDual.get(curr).get(next);
             if (i==1) {
                 queue.add(dualV);
@@ -165,6 +163,10 @@ public class DualForestBuilder {
             VertexOfDualGraph u = queue.poll();
             UnOrdPair edgeWitness = parent.get(u);
             var forestNeibs = dualForest.get(u);
+            if (forestNeibs == null) {
+                forestNeibs = new ArrayList<>();
+                dualForest.put(u, forestNeibs);
+            }
             
             List<Vertex> faceVertices = u.getVerticesOfFace();
             int startId = 0;
@@ -191,7 +193,7 @@ public class DualForestBuilder {
                 assert(!edgePair.equals(edgeWitness));
                 
                 // Check if the edge is on the boundary
-                if (finishBoundaryEdges.contains(edgePair)) continue;
+                if (boundaryEdges.contains(edgePair)) continue;
 
                 // Check if the edge is in the SPT forest
 

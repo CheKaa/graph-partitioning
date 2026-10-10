@@ -8,7 +8,8 @@ import partitioning.entities.UnOrdPair;
 import graph.Edge;
 import graph.EdgeOfGraph;
 import java.util.*;
-import java.util.Map.Entry;
+import partitioning.algorithms.OneShotPartitioner.PartitionRegion;
+
 
 public class CutEvaluator {
     private final CostFunction costFunction;
@@ -21,7 +22,7 @@ public class CutEvaluator {
             Graph<Vertex> graph,
             Graph<VertexOfDualGraph> dualGraph,
             DualForest dualRootedForest,
-            SPTResult<Vertex> sptRes,
+            SPForest<Vertex> sptRes,
             double totalWeight,
             double minRelPartSize
         ) {
@@ -101,10 +102,10 @@ public class CutEvaluator {
         Graph<Vertex> graph,
         Graph<VertexOfDualGraph> dualGraph,
         DualForest dualTree,
-        SPTResult<Vertex> sptRes,
+        SPForest<Vertex> sptRes,
         double totalWeight,
         double minRelPartSize,
-        List<Vertex> boundary
+        PartitionRegion region
     ) {
         VertexOfDualGraph bestDualVertex = null;
         double minCost = Double.MAX_VALUE;
@@ -112,20 +113,31 @@ public class CutEvaluator {
         double bestLength = 0.0;
         var tree = dualTree.forest();
 
-
         var subtreeWeights = computeSubtreeWeights(dualTree);
         var edgeToDualVertexMap = dualGraph.edgeToDualVertexMap();
         var spt = sptRes.parents;
         var distances = sptRes.distances;
+        var boundary = region.boundary;
 
         var vertexToBoundary = mapVerticesToBoundary(spt, new HashSet<>(boundary));
+        
+        for (Vertex v: boundary) {
+            vertexToBoundary.put(v, v);
+        }
+
+        Set<UnOrdPair> boundaryEdges = new HashSet<>();
+        for (int i = 0; i < boundary.size(); i++) {
+            boundaryEdges.add(new UnOrdPair(boundary.get(i), boundary.get((i + 1) % boundary.size())));
+        }
         var edges = graph.getEdges();
+
         for (var e : edges.entrySet()) {
             Vertex v = e.getKey();
 
             for (var edgeInfo: e.getValue().entrySet()) {
                 Vertex u = edgeInfo.getKey();
                 if (u.name > v.name) continue; // Avoid double counting edges
+                if (boundaryEdges.contains(new UnOrdPair(u, v))) continue;
 
                 Edge edge = edgeInfo.getValue();
                 VertexOfDualGraph dualV = edgeToDualVertexMap.get(v).get(u);
@@ -136,6 +148,7 @@ public class CutEvaluator {
                 if (boundaryV.equals(boundaryU)) {
                     continue; // This will lead to a cut that makes an enclave
                 }
+                //TODO possibly small fraction of good cuts
                 
                 if (spt.get(v) == u || spt.get(u) == v) {
                     continue; // Edge is in the SPT tree
@@ -145,7 +158,7 @@ public class CutEvaluator {
                 // to use its subtree weight as the partition weight.
                 VertexOfDualGraph childDual = null;
                 List<VertexOfDualGraph> vChildren = tree.get(dualV);
-                if (vChildren.contains(dualU)) {
+                if (vChildren != null && vChildren.contains(dualU)) {
                     childDual = dualU;
                 } else {
                     List<VertexOfDualGraph> uChildren = tree.get(dualU);
@@ -153,6 +166,7 @@ public class CutEvaluator {
                         childDual = dualV;
                     }
                 }
+                assert childDual != null : "for joint vertices in dual tree one is a child of the other.";
 
                 double weight1 = subtreeWeights.getOrDefault(childDual, 0.0);
                 double length = edge.length + distances.get(v) + distances.get(u);
@@ -165,18 +179,16 @@ public class CutEvaluator {
                     bestLength = length;
                 }
             }
-            if (!vertexToBoundary.containsKey(v)) {
-                vertexToBoundary.put(v, v);
-            }
         }
+
         if (bestDualVertex == null) return null;
 
         // 1. Get the set of faces (dual vertices) in the subtree rooted at bestDualVertex
         Set<VertexOfDualGraph> partition1Faces = getSubtreeVertices(bestDualVertex, dualTree);
 
         // 2. Get the complement set of faces
-        Set<VertexOfDualGraph> allFaces = new HashSet<>(dualGraph.vertices());
-        Set<VertexOfDualGraph> partition2Faces = new HashSet<>(allFaces);
+        HashSet<VertexOfDualGraph> allFaces = new HashSet<>(region.dualVertices);
+        HashSet<VertexOfDualGraph> partition2Faces = new HashSet<>(region.dualVertices);
         partition2Faces.removeAll(partition1Faces);
 
         // 3. Reconstruct the path representing the cut.
@@ -188,7 +200,6 @@ public class CutEvaluator {
 
         Vertex vertex1 = dualEdge.one;
         Vertex vertex2 = dualEdge.two;
-
 
         List<Vertex> cutPath = sptRes.getPathToSource(vertex1);
         cutPath.addAll(sptRes.getPathToSource(vertex2, true));

@@ -61,6 +61,7 @@ public class Graph<T extends Vertex> {
             return v;
         }
         edges.put(v, new HashMap<>());
+        // TODO move to separate method
         if (edgeToDualVertex != null) {
             List<Vertex> faceVertices = ((VertexOfDualGraph) v).getVerticesOfFace();
             for (int i = 0; i < faceVertices.size(); i++) {
@@ -90,7 +91,16 @@ public class Graph<T extends Vertex> {
         return vertices().stream().mapToDouble(T::getWeight).sum();
     }
 
+    public void addEdge(T begin, T end, Edge edge) {
+        if (begin.equals(end)) return;
+        addVertex(begin);
+        addVertex(end);
+        edges.get(begin).put(end, edge);
+        edges.get(end).put(begin, edge);
+    }
+
     public void addEdge(T begin, T end, double length, double bandwidth) {
+        // TODO check if there is no need to create separate edges
         if (begin.equals(end)) return;
         addVertex(begin);
         addVertex(end);
@@ -155,6 +165,7 @@ public class Graph<T extends Vertex> {
     }
 
     public EdgeOfGraph<T>[] edgesArray() {
+        // NB with edge duplication, i.e. undirected edges are counted twice
         int iter = 0;
         EdgeOfGraph<T>[] ans = new EdgeOfGraph[edgesNumber()];
         for (T begin : edges.keySet()) {
@@ -280,6 +291,7 @@ public class Graph<T extends Vertex> {
 
     public Graph<T> createSubgraphFromFaces(List<List<T>> faces) {
         Graph<T> subgraph = new Graph<>();
+        // TODO make version with VertexOfDualGraph
 
         // Добавляем вершины в подграф
         for (List<T> face : faces) {
