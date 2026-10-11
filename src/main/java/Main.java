@@ -42,7 +42,7 @@ public class Main implements Runnable {
     private static final String RESOURCES_DIRECTORY = BASE_DIRECTORY + "resources" + File.separatorChar;
     private static final String OUTPUT_DIRECTORY = BASE_DIRECTORY + "output" + File.separatorChar;
 
-    @Parameters(index = "0", description = "Algorithm name (IF, BUP, BUS)")
+    @Parameters(index = "0", description = "Algorithm name (IF, DIF, RIF, BUP, BUS, SPTCUT, SPTB)")
     private Algorithm algorithmName;
 
     @Parameters(index = "1", description = "Path to graph file (from resources/)")

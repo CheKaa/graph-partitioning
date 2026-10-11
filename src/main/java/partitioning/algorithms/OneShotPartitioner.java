@@ -63,6 +63,24 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
         return BoundSearcher.findBound(simpleGraph, allFaces);
     }
 
+    public static double calculatePathLength(Graph<Vertex> graph, List<Vertex> path, boolean cycle) {
+        double length = 0.0;
+        var edges = graph.getEdges();
+        Vertex curr = cycle ? path.get(path.size() - 1) : path.get(0);
+        int startIdx = cycle ? 0 : 1;
+        for (int i = startIdx; i < path.size(); i++) {
+            Vertex to = path.get(i);
+            var edgesFromVertex = edges.get(curr);
+            if (edgesFromVertex == null || !edgesFromVertex.containsKey(to)) {
+                throw new IllegalArgumentException(
+                        "Path contains an edge that is not present in the graph: " + curr + " -> " + to);
+            }
+            length += edgesFromVertex.get(to).length;
+            curr = to;
+        }
+        return length;
+    }
+
     public List<Set<VertexOfDualGraph>> partition(Graph<Vertex> graph, Graph<VertexOfDualGraph> dualGraph, List<Vertex> boundary, double maxWeight) {
         this.graph = dualGraph;
         /**
@@ -104,6 +122,7 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
         if (regionWeight <= maxWeight) {
             return new PartitionRegion[]{region};
         }
+        double boundaryLength = OneShotPartitioner.calculatePathLength(simpleGraph, region.boundary, true);
 
         List<List<Vertex>> regionFaces = new ArrayList<>();
         for (VertexOfDualGraph face : region.dualVertices) {
@@ -113,7 +132,7 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
         String suffix = "g_size_" + regionGraph.vertices().size();
 
         Graph<VertexOfDualGraph> dualgraph = this.graph;
-        CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
+        CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority/boundaryLength, 0.1, maxWeight, regionWeight, minRelPartSize));
 
         SPForest<Vertex> spt = MultiSourceSPT.computeSPTForest(regionGraph, region.boundary);
 

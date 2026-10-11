@@ -106,7 +106,7 @@ public class DualGraphPartitioner extends BalancedPartitioningOfPlanarGraphs {
         }
         BoundaryVertexFinder<Vertex> boundaryFinder = new BoundaryVertexFinder<>();
         DualForestBuilder forestBuilder = new DualForestBuilder();
-        CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, maxWeight));
+        CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority, 1.0, maxWeight, regionWeight, minRelPartSize));
         var dualGraph = this.graph;
 
         // 1. Find most distant boundary vertices

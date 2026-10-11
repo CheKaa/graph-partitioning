@@ -52,7 +52,7 @@ public class CutEvaluator {
 
                 double currentLength = current.length + 1.0; 
                 double currentWeight = current.weight + current.node.getWeight();
-                double cost = costFunction.calculateCost(currentLength, currentWeight, totalWeight);
+                double cost = costFunction.calculateCost(currentLength, currentWeight);
 
                 if (cost < minCost) {
                     minCost = cost;
@@ -171,7 +171,7 @@ public class CutEvaluator {
                 double weight1 = subtreeWeights.getOrDefault(childDual, 0.0);
                 double length = edge.length + distances.get(v) + distances.get(u);
 
-                double cost = costFunction.calculateCost(length, weight1, totalWeight);
+                double cost = costFunction.calculateCost(length, weight1);
                 if (cost < minCost) {
                     minCost = cost;
                     bestDualVertex = childDual;

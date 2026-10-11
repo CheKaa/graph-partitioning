@@ -5,6 +5,7 @@ import partitioning.algorithms.BubblePartitioning;
 import partitioning.algorithms.BubblePartitioningSequentially;
 import partitioning.algorithms.DualGraphPartitioner;
 import partitioning.algorithms.InertialFlowPartitioning;
+import partitioning.algorithms.OneShotPartitioner;
 import partitioning.algorithms.OriginalInertialFlowPartitioning;
 
 public enum Algorithm {
@@ -13,7 +14,8 @@ public enum Algorithm {
     RIF,
     BUP,
     BUS,
-    SPTCUT;
+    SPTCUT,
+    SPTB;
 
     public static BalancedPartitioning getBalancedPartitioningByAlgorithmName(
             Algorithm algorithmName,
@@ -39,6 +41,9 @@ public enum Algorithm {
             );
             case SPTCUT -> new BalancedPartitioning(
                 new DualGraphPartitioner(lengthPriority, partitionParameter)
+            );
+            case SPTB -> new BalancedPartitioning(
+                new OneShotPartitioner(lengthPriority, partitionParameter)
             );
         };
     }

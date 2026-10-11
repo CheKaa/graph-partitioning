@@ -1,5 +1,6 @@
 package partitioning.algorithms;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,18 @@ import readWrite.CoordinateConversion;
 import readWrite.PartitionDebugger;
 
 class OneShotPartitionerSplitTest {
+    @Test
+    void calculatesPathLengthFromConsecutiveVertices() {
+        Vertex first = new Vertex(1, 0.0, 0.0, 0.0);
+        Vertex second = new Vertex(2, 3.0, 0.0, 0.0);
+        Vertex third = new Vertex(3, 3.0, 4.0, 0.0);
+        Graph<Vertex> graph = new Graph<>();
+        graph.addEdge(first, second, 10.0);
+        graph.addEdge(second, third, 20.0);
+
+        assertEquals(30.0, OneShotPartitioner.calculatePathLength(graph, List.of(first, second, third), false));
+    }
+
     @Test
     void partitionsGridSplit3() {
         Graph<Vertex> simpleGraph = TestGraphUtils.createGridGraph(3, 3, 1.0);
@@ -92,7 +105,7 @@ class OneShotPartitionerSplitTest {
         List<Vertex> boundary = BoundSearcher.findBound(simpleGraph, allFaces);
         assertNotNull(boundary, "Boundary should not be null");
         assertFalse(boundary.isEmpty(), "Boundary should not be empty");
-        double maxWeight = 5.0;
+        double maxWeight = 6.0;
 
         OneShotPartitioner partitioner = new OneShotPartitioner(1.0, 0.1);
         partitioner.debugger = debugger;
