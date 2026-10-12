@@ -142,8 +142,8 @@ public class DualForestBuilder {
 
         Set<UnOrdPair> boundaryEdges = new HashSet<>();
         // TODO replace unordered pair with ordered
-        Vertex curr = boundary.get(0);
-        for (int i = 1; i < boundary.size(); i++) {
+        Vertex curr = boundary.get(boundary.size()-1);
+        for (int i = 0; i < boundary.size(); i++) {
             Vertex next = boundary.get(i);
 
             assert !forestCheck.check(curr, next);
@@ -151,7 +151,7 @@ public class DualForestBuilder {
             UnOrdPair edgePair = new UnOrdPair(curr, next);
             boundaryEdges.add(edgePair);
             VertexOfDualGraph dualV = edgeToDual.get(curr).get(next);
-            if (i==1) {
+            if (i==0) {
                 queue.add(dualV);
                 parent.put(dualV, edgePair);
                 roots.add(dualV);

@@ -157,6 +157,7 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
                 debugger.dumpBoundaryGeoJSON(newBoundaries[0], "boundary1_" + suffix);
                 debugger.dumpBoundaryGeoJSON(newBoundaries[1], "boundary2_" + suffix);
             }
+            // System.out.println("part1 size " + bestCut.part1.size() + " part2 size " + bestCut.part2.size());
             PartitionRegion region1 = new PartitionRegion(bestCut.part1, newBoundaries[0]);
             PartitionRegion region2 = new PartitionRegion(bestCut.part2, newBoundaries[1]);
 
