@@ -35,64 +35,36 @@ class OneShotPartitionerSplitTest {
 
     @Test
     void partitionsGridSplit3() {
-        Graph<Vertex> simpleGraph = TestGraphUtils.createGridGraph(3, 3, 1.0);
-        CoordinateConversion coordinateConversion = new CoordinateConversion(new Point(0, 0));
-        PartitionDebugger debugger = new PartitionDebugger(coordinateConversion);
-
-        MakingDualGraph dualGraphBuilder = new MakingDualGraph();
-        Graph<VertexOfDualGraph> dualGraph = dualGraphBuilder.buildDualGraph(simpleGraph);
-        VertexOfDualGraph externalFace = dualGraphBuilder.findExternalFace(dualGraph);
-        NestedFacesRemover.removeNestedFaces(dualGraph, externalFace);
-        dualGraph.deleteVertex(externalFace);
-        dualGraph.vertices().forEach(face -> face.setWeight(1.0));
-
-        Set<VertexOfDualGraph> allFaces = new HashSet<>(dualGraph.vertices());
-        List<Vertex> boundary = BoundSearcher.findBound(simpleGraph, allFaces);
-        assertNotNull(boundary, "Boundary should not be null");
-        assertFalse(boundary.isEmpty(), "Boundary should not be empty");
-
-        OneShotPartitioner partitioner = new OneShotPartitioner(1.0, 0.1);
-        partitioner.debugger = debugger;
-        List<Set<VertexOfDualGraph>> partitions =
-                partitioner.partition(simpleGraph, dualGraph, boundary, 2.0);
-
-        assertTrue(partitions.size() >= 2, "Should split the four-face grid at maxWeight=2.0");
+        testOnGrid(3, 3, 2.0);
     }
-
 
     @Test
     void partitionsGridSplit5() {
-        Graph<Vertex> simpleGraph = TestGraphUtils.createGridGraph(5, 5, 1.0);
-        CoordinateConversion coordinateConversion = new CoordinateConversion(new Point(0, 0));
-        PartitionDebugger debugger = new PartitionDebugger(coordinateConversion);
-
-        MakingDualGraph dualGraphBuilder = new MakingDualGraph();
-        Graph<VertexOfDualGraph> dualGraph = dualGraphBuilder.buildDualGraph(simpleGraph);
-        VertexOfDualGraph externalFace = dualGraphBuilder.findExternalFace(dualGraph);
-        NestedFacesRemover.removeNestedFaces(dualGraph, externalFace);
-        dualGraph.deleteVertex(externalFace);
-        dualGraph.vertices().forEach(face -> face.setWeight(1.0));
-
-        Set<VertexOfDualGraph> allFaces = new HashSet<>(dualGraph.vertices());
-        List<Vertex> boundary = BoundSearcher.findBound(simpleGraph, allFaces);
-        assertNotNull(boundary, "Boundary should not be null");
-        assertFalse(boundary.isEmpty(), "Boundary should not be empty");
-        double maxWeight = 5.0;
-
-        OneShotPartitioner partitioner = new OneShotPartitioner(1.0, 0.1);
-        partitioner.debugger = debugger;
-        List<Set<VertexOfDualGraph>> partition =
-                partitioner.partition(simpleGraph, dualGraph, boundary, maxWeight);
-        assertTrue(PartitionChecker.isConsistent(dualGraph, partition, maxWeight), "inconsistent partition");
-
-        assertTrue(partition.size() >= 2, "Should split the four-face grid at maxWeight=2.0");
+        testOnGrid(5, 5, 3.0, 1.0, 0.1, false, true);
     }
 
     @Test
     void partitionsGridSplit1015() {
-        Graph<Vertex> simpleGraph = TestGraphUtils.createGridGraph(10, 15, 1.0);
+        testOnGrid(10, 15, 5.0, 1.0, 0.1, true, true);
+    }
+
+    @Test
+    void partitionsGridSplit100100100() {
+        testOnGrid(100, 100, 100.0, 1, 0.1, false, true);
+    }
+   
+    // @Test
+    // void partitionsGridSplit100010001000() {
+    //     testOnGrid(1000, 1000, 1000.0, 1, 0.1, false, true);
+    // }
+
+    void testOnGrid(int n, int m, double maxWeight) {
+        testOnGrid(n, m, maxWeight, 1.0, 0.1, false, false);
+    }
+
+    void testOnGrid(int n, int m, double maxWeight, double lengthPriority, double minRelPartSize, boolean debug, boolean dumpRes) {
+        Graph<Vertex> simpleGraph = TestGraphUtils.createGridGraph(n, m, 1.0);
         CoordinateConversion coordinateConversion = new CoordinateConversion(new Point(0, 0));
-        PartitionDebugger debugger = new PartitionDebugger(coordinateConversion);
 
         MakingDualGraph dualGraphBuilder = new MakingDualGraph();
         Graph<VertexOfDualGraph> dualGraph = dualGraphBuilder.buildDualGraph(simpleGraph);
@@ -105,15 +77,18 @@ class OneShotPartitionerSplitTest {
         List<Vertex> boundary = BoundSearcher.findBound(simpleGraph, allFaces);
         assertNotNull(boundary, "Boundary should not be null");
         assertFalse(boundary.isEmpty(), "Boundary should not be empty");
-        double maxWeight = 6.0;
+        PartitionDebugger debugger = new PartitionDebugger(coordinateConversion);
 
-        OneShotPartitioner partitioner = new OneShotPartitioner(1.0, 0.1);
-        partitioner.debugger = debugger;
+        OneShotPartitioner partitioner = new OneShotPartitioner(lengthPriority, minRelPartSize);
+        if (debug) {
+            partitioner.debugger = debugger;
+        }
         List<Set<VertexOfDualGraph>> partition =
                 partitioner.partition(simpleGraph, dualGraph, boundary, maxWeight);
-        debugger.dumpPartitionGeoJSON(partition, "partition_10x15");
+        
+        if (dumpRes) {
+            debugger.dumpPartitionGeoJSON(partition, "partition_debug_" + n + "_" + m);
+        }
         assertTrue(PartitionChecker.isConsistent(dualGraph, partition, maxWeight), "inconsistent partition");
-
-        assertTrue(partition.size() >= 2, "Should split the four-face grid at maxWeight=2.0");
     }
 }

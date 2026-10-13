@@ -2,7 +2,15 @@ package graph;
 
 import java.util.*;
 
+import geometry.Geometry;
+
 public class TestGraphUtils {
+    public static void setDualGraphWeightsToFaceAreas(Graph<VertexOfDualGraph> dualGraph) {
+        for (VertexOfDualGraph face : dualGraph.vertices()) {
+            face.setWeight(Math.abs(Geometry.area(face.getVerticesOfFace())));
+        }
+    }
+
     public static Graph<Vertex> createGridGraph(int n, int m) {
         return createGridGraph(n, m, 1.0);
     }

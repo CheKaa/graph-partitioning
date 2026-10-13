@@ -93,6 +93,10 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
 
         Set<VertexOfDualGraph> allDualVertices = new HashSet<>(dualGraph.vertices());
         queue.add(new PartitionRegion(allDualVertices, boundary));
+        if (debugger != null) {
+            debugger.dumpDualGraphGeoJSON(dualGraph, "dual_graph_g_size_" + graph.vertices().size());
+            debugger.dumpOriginalGraphGeoJSON(graph, "simple_graph_g_size_" + graph.vertices().size());
+        }
 
         while (!queue.isEmpty()) {
             PartitionRegion region = queue.poll();
@@ -132,7 +136,10 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
         String suffix = "g_size_" + regionGraph.vertices().size();
 
         Graph<VertexOfDualGraph> dualgraph = this.graph;
-        CutEvaluator cutEvaluator = new CutEvaluator(new CostFunction(lengthPriority/boundaryLength, 0.1, maxWeight, regionWeight, minRelPartSize));
+        double approxReg = regionWeight / maxWeight;
+        CostFunction costF = new CostFunction(2 * lengthPriority * Math.sqrt(approxReg) / boundaryLength,
+                                              0.1, maxWeight, regionWeight, minRelPartSize);
+        CutEvaluator cutEvaluator = new CutEvaluator(costF);
 
         SPForest<Vertex> spt = MultiSourceSPT.computeSPTForest(regionGraph, region.boundary);
 

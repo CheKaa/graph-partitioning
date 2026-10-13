@@ -4,12 +4,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TestGraphUtilsSpiralTest {
+    @Test
+    void setsDualVertexWeightsToAbsoluteFaceAreas() {
+        Graph<VertexOfDualGraph> dualGraph = new Graph<>();
+        VertexOfDualGraph counterClockwiseFace = face(1,
+                new Vertex(1, 0, 0), new Vertex(2, 2, 0), new Vertex(3, 0, 2));
+        VertexOfDualGraph clockwiseFace = face(2,
+                new Vertex(4, 0, 0), new Vertex(5, 0, 2), new Vertex(6, 2, 0));
+        dualGraph.addVertex(counterClockwiseFace);
+        dualGraph.addVertex(clockwiseFace);
+
+        TestGraphUtils.setDualGraphWeightsToFaceAreas(dualGraph);
+
+        assertEquals(2.0, counterClockwiseFace.getWeight());
+        assertEquals(2.0, clockwiseFace.getWeight());
+    }
+
     @Test
     void createsOneSpiralRouteAcrossRectangularGridFromBoundaryVertices() {
         assertSpiralRoute(0, 0);
@@ -59,5 +77,10 @@ class TestGraphUtilsSpiralTest {
             }
         }
         assertEquals(graph.vertices().size(), reached.size());
+    }
+
+    private static VertexOfDualGraph face(long name, Vertex... vertices) {
+        List<Vertex> faceVertices = List.of(vertices);
+        return new VertexOfDualGraph(name, new Vertex(name), 0.0, new ArrayList<>(faceVertices));
     }
 }
