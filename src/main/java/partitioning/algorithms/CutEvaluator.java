@@ -98,6 +98,200 @@ public class CutEvaluator {
         return bestCut;
     }
 
+    static record State(VertexOfDualGraph node, boolean in){}
+
+    public Cut evaluateBestCutForTreeCircular(
+        Graph<Vertex> graph,
+        Graph<VertexOfDualGraph> dualGraph,
+        DualForest dualTree,
+        SPForest<Vertex> sptRes,
+        double totalWeight,
+        double minRelPartSize,
+        PartitionRegion region,
+        double desiredWeight
+    ) {
+        if (dualTree.roots().isEmpty() || desiredWeight <= 0.0 || desiredWeight >= totalWeight) {
+            return null;
+        }
+
+        Stack<State> addStack = new Stack<>();
+        for (VertexOfDualGraph root : dualTree.roots()) {
+            addStack.push(new State(root, true));
+        }
+
+        BoundaryHandler boundary = new BoundaryHandler(graph);
+        Deque<VertexOfDualGraph> facesToRemove = new ArrayDeque<>();
+        double selectedWeight = 0.0;
+        double bestCost = Double.MAX_VALUE;
+        CircularCandidate best = null;
+        boolean addMode = true;
+        VertexOfDualGraph currFace = null;
+
+        while (true) {
+            if (addMode) {
+                if (addStack.isEmpty()) {
+                    break;
+                }
+                State state = addStack.pop();
+                currFace = state.node();
+                boolean in = state.in();
+
+                if (!in) {
+                    facesToRemove.addLast(currFace);
+                    continue;
+                }
+
+                boundary.addVertices(currFace.getVerticesOfFace());
+                selectedWeight += currFace.getWeight();
+                double length = boundary.length();
+                double cost = costFunction.calculateCost(length, selectedWeight);
+                if (cost < bestCost){
+                    bestCost = cost;
+                    VertexOfDualGraph bottomFace = facesToRemove.getLast();
+
+                    best = new CircularCandidate(currFace, bottomFace, selectedWeight, length, cost);
+                }
+
+                List<VertexOfDualGraph> children = dualTree.forest().get(currFace);
+                if (children != null) {
+                    for (VertexOfDualGraph child : children) {
+                        addStack.push(new State(child, true));
+                        addStack.push(new State(child, false));
+                    }
+                }
+
+                if (selectedWeight > desiredWeight) {
+                    addMode = false;
+                }
+
+            } else {
+                if (facesToRemove.isEmpty()) {
+                    break;
+                }
+                VertexOfDualGraph face = facesToRemove.removeLast();
+                boundary.removeVertices(face.getVerticesOfFace());
+                selectedWeight -= face.getWeight();
+                double length = boundary.length();
+                double cost = costFunction.calculateCost(length, selectedWeight);
+                if (cost < bestCost){
+                    bestCost = cost;
+                    VertexOfDualGraph bottomFace = facesToRemove.getLast();
+                    best = new CircularCandidate(face, bottomFace, selectedWeight, length, cost);
+                }
+
+                if (selectedWeight < desiredWeight) {
+                    addMode = true;
+                }
+            }
+        }
+
+        Set<VertexOfDualGraph> part1 = new HashSet<>();
+        Set<VertexOfDualGraph> part2 = new HashSet<>(region.dualVertices);
+        BoundaryHandler bestBoundary = new BoundaryHandler(graph);
+        collectCircularPart(dualTree, best.topFace, best.bottomFace, part1, bestBoundary);
+        if (part1.isEmpty() || !region.dualVertices.containsAll(part1)) {
+            return null;
+        }
+        part2.removeAll(part1);
+        if (part2.isEmpty()) {
+            return null;
+        }
+
+        List<Vertex> cutPath = extractCutPath(bestBoundary, region.boundary);
+        if (cutPath == null) {
+            return null;
+        }
+
+        return new Cut(
+                part1,
+                part2,
+                cutPath,
+                best.length,
+                best.weight,
+                totalWeight - best.weight,
+                best.cost);
+    }
+
+
+    private void collectCircularPart(
+            DualForest dualTree,
+            VertexOfDualGraph topFace,
+            VertexOfDualGraph bottomFace,
+            Set<VertexOfDualGraph> part,
+            BoundaryHandler boundary
+    ) {
+        Queue<VertexOfDualGraph> traversal = new ArrayDeque<>(dualTree.roots());
+        boolean collecting = false;
+        while (!traversal.isEmpty()) {
+            VertexOfDualGraph face = traversal.remove();
+            if (!collecting && face.equals(topFace)) {
+                collecting = true;
+            }
+            if (collecting) {
+                part.add(face);
+                boundary.addVertices(face.getVerticesOfFace());
+                if (face.equals(bottomFace)) {
+                    return;
+                }
+            }
+            List<VertexOfDualGraph> children = dualTree.forest().get(face);
+            if (children != null) {
+                traversal.addAll(children);
+            }
+        }
+    }
+
+    private List<Vertex> extractCutPath(BoundaryHandler boundary, List<Vertex> originalBoundary) {
+        if (boundary.length() == 0.0) {
+            return null;
+        }
+        HashSet<Vertex> boundarySet = new HashSet<>(originalBoundary);
+
+        List<Vertex> cutPath = new ArrayList<>();
+        Vertex startVertex = boundary.edges().keySet().iterator().next();
+        cutPath.add(startVertex);
+        Vertex curr = startVertex;
+        boolean currOnBound = boundarySet.contains(curr);
+        int cutStart = -1;
+
+        do {
+            Vertex next = boundary.edges().get(curr).keySet().iterator().next();
+            boolean add = true;
+            boolean nextOnBound = boundarySet.contains(next);
+            if (currOnBound){
+                if (nextOnBound){
+                    add = false;
+                } else {
+                    assert (cutStart == -1): "Not a simple cut";
+                    cutStart = cutPath.size();
+                }
+            }
+
+            if (add) {
+                cutPath.add(next);
+            }
+
+            curr = next;
+            currOnBound = nextOnBound;
+        } while (!curr.equals(startVertex));
+
+        ArrayList<Vertex> ans = new ArrayList<>();
+        ans.addAll(cutStart, cutPath);
+        for (int i = 0; i < cutStart; i++){
+            ans.add(cutPath.get(i));
+        }
+        return cutPath;
+    }
+
+    private record CircularCandidate(
+            VertexOfDualGraph topFace,
+            VertexOfDualGraph bottomFace,
+            double weight,
+            double length,
+            double cost
+    ) {}
+
+
     public Cut evaluateBestCutForTree(
         Graph<Vertex> graph,
         Graph<VertexOfDualGraph> dualGraph,

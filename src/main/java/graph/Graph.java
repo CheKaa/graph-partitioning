@@ -23,7 +23,7 @@ public class Graph<T extends Vertex> {
      * vertices - keys for HashMap
      */
     private static final Logger logger = LoggerFactory.getLogger(Graph.class);
-    private Map<T, Map<T, Edge>> edges;
+    protected Map<T, Map<T, Edge>> edges;
     private Map<Vertex, Map<Vertex, VertexOfDualGraph>> edgeToDualVertex;
     private Map<T, TreeSet<EdgeOfGraph<T>>> vertexToSortedEdges;
 
@@ -56,8 +56,7 @@ public class Graph<T extends Vertex> {
     }
 
     public T addVertex(T v) {
-        boolean exists = edges.containsKey(v);
-        if (exists) {
+        if (edges.containsKey(v)) {
             return v;
         }
         edges.put(v, new HashMap<>());
@@ -86,6 +85,15 @@ public class Graph<T extends Vertex> {
         }
 
     }
+
+    public Edge getEdge(T begin, T end) {
+        if (edges.containsKey(begin)) {
+            return edges.get(begin).get(end);
+        }
+        return null;
+    }
+
+
 
     public Double verticesWeight() {
         return vertices().stream().mapToDouble(T::getWeight).sum();

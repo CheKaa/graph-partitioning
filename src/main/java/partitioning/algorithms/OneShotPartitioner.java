@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +135,8 @@ public class OneShotPartitioner extends BalancedPartitioningOfPlanarGraphs {
             regionFaces.add(face.getVerticesOfFace());
         }
         Graph<Vertex> regionGraph = simpleGraph.createSubgraphFromFaces(regionFaces);
-        String suffix = "g_size_" + regionGraph.vertices().size();
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH_mm_ss_SSS"));
+        String suffix = "g_size_" + regionGraph.vertices().size() + "_" + time;
 
         Graph<VertexOfDualGraph> dualgraph = this.graph;
         double approxReg = regionWeight / maxWeight;
